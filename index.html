@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HELLO SHOP | Premium Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary: #F85606; --bg: #f4f7f6; --gray-alert: #333333; --green-tick: #28a745; --red: #e74c3c; }
+        body { font-family: 'Poppins', sans-serif; margin:0; background: var(--bg); padding-bottom: 80px; overflow-x: hidden; }
+
+        /* Loader Overlay */
+        #loaderOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.7); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .spinner-bg { width: 60px; height: 60px; border: 6px solid #ccc; border-top: 6px solid var(--green-tick); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Custom Notification Toast (Gray Box) */
+        #customToast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gray-alert); color: white; padding: 12px 25px; border-radius: 8px; display: none; z-index: 5000; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 14px; white-space: nowrap; }
+        .tick-icon { width: 18px; height: 18px; background: var(--green-tick); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; }
+
+        header { background: var(--primary); color:white; padding:15px; text-align:center; font-weight:bold; font-size:20px; position: sticky; top:0; z-index:1000; }
+        .search-area { background: white; padding: 10px; position: sticky; top: 55px; z-index: 999; border-bottom: 1px solid #eee; }
+        #searchBar { width: 90%; padding: 10px 15px; display: block; margin: 0 auto; border: 1px solid #ddd; border-radius: 25px; outline: none; }
+
+        #products { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; position: relative; }
+        .card img { width: 100%; height: 150px; object-fit: cover; background: #f0f0f0; }
+        .card-info { padding: 10px; }
+        .card-info h4 { font-size: 12px; margin: 5px 0; color: #333; height: 35px; overflow: hidden; font-weight: 500; }
+        .price-tag { color: var(--primary); font-weight: 700; font-size: 14px; }
+
+        /* Admin Controls */
+        .admin-controls { display: none; padding: 5px; background: #eee; gap: 5px; justify-content: space-around; }
+        .btn-edit { background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; }
+        .btn-del-prod { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; }
+
+        /* Custom Modal for Price Edit (Removing Chrome Prompt) */
+        #editModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 6000; }
+        .modal-box { background: white; padding: 20px; border-radius: 12px; width: 80%; max-width: 300px; text-align: center; }
+
+        #productDetail { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; display: none; overflow-y: auto; }
+        .gallery-container { width: 100%; overflow-x: auto; display: flex; scroll-snap-type: x mandatory; }
+        .gallery-container img { width: 100%; flex-shrink: 0; height: 350px; object-fit: cover; scroll-snap-align: start; }
+        
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; margin: 8px 0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .btn-delete { background: var(--red); color: white; border: none; width: 25px; height: 25px; border-radius: 50%; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        .payment-method { border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin: 8px 0; cursor: pointer; text-align: left; }
+        .payment-method.active { border: 2px solid var(--primary); background: #fff5f0; }
+
+        input, textarea { width: 92%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+        #adminPanel { display: none; background: white; padding: 20px; border-top: 2px solid var(--primary); margin-top: 20px; text-align: left; }
+        .file-input-label { display: block; padding: 10px; background: #eee; border: 1px dashed #999; text-align: center; border-radius: 8px; cursor: pointer; margin: 10px 0; }
+        #imagePreview { width: 100px; height: 100px; object-fit: cover; display: none; margin-bottom: 10px; border-radius: 5px; }
+
+        .bottomNav { position:fixed; bottom:0; width:100%; height:70px; background: white; display:flex; justify-content:space-around; align-items:center; box-shadow:0 -3px 15px rgba(0,0,0,0.1); z-index: 1000; }
+        .nav-item { background: none; border: none; font-size: 10px; color: #666; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+        .nav-active { color: var(--primary); font-weight: bold; }
+
+        .section { display: none; padding: 15px; }
+        .active-section { display: block; }
+    </style>
+</head>
+<body>
+
+<div id="loaderOverlay"><div class="spinner-bg"></div></div>
+<div id="customToast"><div class="tick-icon">✓</div><span id="toastMsg">Action Successful</span></div>
+
+<div id="editModal">
+    <div class="modal-box">
+        <h4>Edit Price</h4>
+        <input type="number" id="newPriceInput" placeholder="Enter New Price">
+        <button class="btn-main" onclick="saveNewPrice()">Save</button>
+        <button class="btn-main" style="background:#888; margin-top:5px" onclick="closeEditModal()">Cancel</button>
+    </div>
+</div>
+
+<header>HELLO SHOP</header>
+
+<div id="authPage" class="section active-section">
+    <div style="text-align: center; padding-top: 50px;">
+        <h2 style="color:var(--primary)">Login to Continue</h2>
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPass" placeholder="Password">
+        <button class="btn-main" onclick="handleLogin()">Login</button>
+        <p>New user?</p>
+        <button class="btn-main" style="background:#444" onclick="handleSignup()">Signup</button>
+    </div>
+</div>
+
+<div id="mainApp" style="display:none;">
+    <div class="search-area" id="searchContainer">
+        <input type="text" id="searchBar" placeholder="Search 70+ Products..." onkeyup="searchProducts()">
+    </div>
+
+    <div id="homeSection" class="section active-section">
+        <div id="products"></div>
+        <div id="adminPanel">
+            <h3 style="color:var(--primary)">Admin: Add New Product</h3>
+            <input type="text" id="pName" placeholder="Product Name">
+            <input type="number" id="pPrice" placeholder="Price (Rs)">
+            <label class="file-input-label">
+                <span>📁 Select Image from Gallery</span>
+                <input type="file" id="pImgFile" accept="image/*" style="display:none" onchange="previewFile()">
+            </label>
+            <img id="imagePreview">
+            <textarea id="pDesc" placeholder="Product Description"></textarea>
+            <button class="btn-main" onclick="adminAddProduct()">Upload to Store</button>
+        </div>
+    </div>
+
+    <div id="cartSection" class="section">
+        <h3 style="text-align: center;">Checkout</h3>
+        <div id="cartItems"></div>
+        <div style="margin-top: 20px;">
+            <h4>Address Selection</h4>
+            <div id="checkoutAddresses"></div>
+            <input type="text" id="orderName" placeholder="Full Name">
+            <h4>Payment</h4>
+            <div class="payment-method" id="pay-cod" onclick="selectPayment('COD')">Cash on Delivery</div>
+            <div class="payment-method" id="pay-ep" onclick="selectPayment('Easypaisa')">Easypaisa</div>
+            <div id="paymentDetails" style="display:none; padding:10px; background:#fff3e0; border:1px dashed var(--primary); border-radius:8px">SAJAWAL NAZEER: 03299469894</div>
+            <button class="btn-main" style="background:var(--green-tick); margin-top:10px" onclick="placeOrder()">Place Order (Total: Rs <span id="cartTotal">0</span>)</button>
+        </div>
+    </div>
+
+    <div id="profileSection" class="section" style="text-align: center;">
+        <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:80px; border-radius:50%">
+        <h3 id="displayEmail">User</h3>
+        <hr>
+        <div id="savedAddresses"></div>
+        <input type="text" id="newAddr" placeholder="New Address">
+        <button class="btn-main" onclick="addAddress()">+ Add Address</button>
+        <button class="btn-main" style="background:#888; margin-top:30px" onclick="location.reload()">Logout</button>
+    </div>
+</div>
+
+<div id="productDetail">
+    <button onclick="closeDetail()" style="position:fixed; top:20px; left:20px; z-index:2001; padding: 10px; border: none; background: white; border-radius: 5px;">✕ Back</button>
+    <div class="gallery-container" id="gallery"></div>
+    <div class="detail-content">
+        <h2 id="detName"></h2>
+        <span class="price-tag" id="detPrice" style="font-size: 22px;"></span>
+        <p id="detDesc"></p>
+        <button class="btn-main" onclick="addToCart()">Add to Cart</button>
+        <button class="btn-main" style="background:var(--green-tick); margin-top:10px" onclick="buyNow()">Buy Now</button>
+    </div>
+</div>
+
+<div id="bottomNav" class="bottomNav" style="display:none;">
+    <button class="nav-item nav-active" onclick="switchSection('homeSection', this)"><span>🏠</span>Home</button>
+    <button class="nav-item" onclick="switchSection('cartSection', this)"><span>🛒</span>Cart</button>
+    <button class="nav-item" onclick="switchSection('profileSection', this)"><span>👤</span>Profile</button>
+</div>
+
+<script>
+const SUPABASE_URL = "https://urrqpsmhlzldtxzstnuu.supabase.co";
+const SUPABASE_KEY = "sb_publishable_OmqQDQdf7ye8KXbviwFYng_zPdbZpWb";
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const ADMIN_EMAIL = "ligerplaz@gmail.com";
+let cart = [], currentItem = null, currentUser = null, isAdmin = false, addresses = [], selectedAddr = "";
+let uploadedImgBase64 = "", editingProductId = null;
+
+const pData = [{ n: "iPhone 15 Pro Max", p: 455000, k: "iphone", d: "Titanium build. PTA Approved." }, { n: "Samsung S24 Ultra", p: 385000, k: "samsung", d: "AI Camera 200MP." }, { n: "Sony WH-1000XM5", p: 98000, k: "headphones", d: "No.1 Noise Cancellation." }];
+for(let i=0; i<67; i++) pData.push({ n: `Premium Product ${i+10}`, p: 4000+(i*500), k: "gadget", d: "High-end product quality." });
+
+let allProducts = pData.map((x, i) => ({ id: i+1, name: x.n, price: x.p, desc: x.d, images: [`https://source.unsplash.com/600x600/?${x.k},${i}`, `https://source.unsplash.com/600x600/?${x.k},item`] }));
+
+function showToast(msg) {
+    const t = document.getElementById('customToast');
+    document.getElementById('toastMsg').innerText = msg;
+    t.style.display = 'flex'; setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function previewFile() {
+    const file = document.getElementById('pImgFile').files[0];
+    const reader = new FileReader();
+    reader.onloadend = function() { uploadedImgBase64 = reader.result; document.getElementById('imagePreview').src = reader.result; document.getElementById('imagePreview').style.display = 'block'; }
+    if (file) reader.readAsDataURL(file);
+}
+
+async function handleLogin() {
+    if(!loginEmail.value || !loginPass.value) { showToast("Email and password required!"); return; }
+    loaderOverlay.style.display = 'flex';
+    const { data, error } = await _supabase.auth.signInWithPassword({ email: loginEmail.value, password: loginPass.value });
+    loaderOverlay.style.display = 'none';
+    if(error) showToast(error.message);
+    else {
+        currentUser = data.user; isAdmin = (currentUser.email === ADMIN_EMAIL);
+        showToast("Welcome Back!"); authPage.style.display = 'none'; mainApp.style.display = 'block'; bottomNav.style.display = 'flex';
+        displayEmail.innerText = currentUser.email; if(isAdmin) adminPanel.style.display = 'block';
+        loadProducts();
+    }
+}
+
+async function handleSignup() {
+    if(!loginEmail.value || !loginPass.value) { showToast("Email and password required!"); return; }
+    loaderOverlay.style.display = 'flex';
+    const { error } = await _supabase.auth.signUp({ email: loginEmail.value, password: loginPass.value });
+    loaderOverlay.style.display = 'none';
+    if(error) showToast(error.message); else showToast("Check your email for verification!");
+}
+
+function loadProducts() {
+    products.innerHTML = allProducts.map(p => `
+        <div class="card">
+            <div onclick="openDetail(${p.id})">
+                <img src="${p.images[0]}" loading="lazy">
+                <div class="card-info"><h4>${p.name}</h4><span class="price-tag">Rs ${p.price.toLocaleString()}</span></div>
+            </div>
+            <div class="admin-controls" style="display: ${isAdmin ? 'flex' : 'none'}">
+                <button class="btn-edit" onclick="openEditModal(${p.id})">Edit</button>
+                <button class="btn-del-prod" onclick="adminDelete(${p.id})">Del</button>
+            </div>
+        </div>`).join('');
+}
+
+// ADMIN ACTION UPDATES (NO MORE PROMPTS)
+function openEditModal(id) {
+    editingProductId = id;
+    const p = allProducts.find(x => x.id === id);
+    newPriceInput.value = p.price;
+    editModal.style.display = 'flex';
+}
+
+function closeEditModal() { editModal.style.display = 'none'; }
+
+function saveNewPrice() {
+    const p = allProducts.find(x => x.id === editingProductId);
+    if(newPriceInput.value) {
+        p.price = parseInt(newPriceInput.value);
+        loadProducts();
+        closeEditModal();
+        showToast("Price Updated Successfully");
+    } else {
+        showToast("Please enter a valid price");
+    }
+}
+
+function adminDelete(id) { 
+    allProducts = allProducts.filter(p => p.id !== id); 
+    loadProducts(); 
+    showToast("Product Removed Successfully"); 
+}
+
+function adminAddProduct() {
+    if(!pName.value || !pPrice.value || !uploadedImgBase64) { showToast("Missing name, price or image!"); return; }
+    allProducts.unshift({ id: Date.now(), name: pName.value, price: parseInt(pPrice.value), desc: pDesc.value || "Premium Quality.", images: [uploadedImgBase64, uploadedImgBase64] });
+    loadProducts(); pName.value = ''; pPrice.value = ''; pDesc.value = ''; document.getElementById('imagePreview').style.display = 'none'; uploadedImgBase64 = ""; showToast("Product Uploaded");
+}
+
+async function placeOrder() {
+    if(!selectedAddr || !orderName.value || cart.length === 0) {
+        showToast("Missing Name, Address or Items!");
+        return;
+    }
+    loaderOverlay.style.display = 'flex';
+    // Simulate Order Placement
+    setTimeout(() => {
+        loaderOverlay.style.display = 'none';
+        showToast("Order Placed Successfully!");
+        cart = []; updateCartUI(); switchSection('homeSection');
+    }, 1500);
+}
+
+// REST OF THE UI LOGIC
+function openDetail(id) { currentItem = allProducts.find(x => x.id === id); gallery.innerHTML = currentItem.images.map(img => `<img src="${img}">`).join(''); detName.innerText = currentItem.name; detPrice.innerText = "Rs " + currentItem.price.toLocaleString(); detDesc.innerText = currentItem.desc; productDetail.style.display = 'block'; }
+function closeDetail() { productDetail.style.display = 'none'; }
+function addToCart() { cart.push({...currentItem, cartId: Date.now()}); updateCartUI(); showToast("Added to cart"); closeDetail(); }
+function buyNow() { cart = [{...currentItem, cartId: Date.now()}]; updateCartUI(); switchSection('cartSection'); closeDetail(); }
+function removeFromCart(id) { cart = cart.filter(i => i.cartId !== id); updateCartUI(); }
+
+function updateCartUI() {
+    let total = 0; cartItems.innerHTML = cart.length === 0 ? "Empty" : cart.map(i => { total += i.price; return `<div class="cart-item"><div><b>${i.name}</b><br>Rs ${i.price.toLocaleString()}</div><button class="btn-delete" onclick="removeFromCart(${i.cartId})">✕</button></div>`; }).join('');
+    cartTotal.innerText = total.toLocaleString();
+}
+
+function addAddress() { if(newAddr.value) { addresses.push(newAddr.value); newAddr.value=''; renderAddr(); showToast("Address Saved"); } else { showToast("Address cannot be empty"); } }
+function renderAddr() { const h = addresses.map(a => `<div class="address-card ${selectedAddr===a?'selected':''}" onclick="selectedAddr='${a}'; renderAddr();">${a}</div>`).join(''); savedAddresses.innerHTML = h; checkoutAddresses.innerHTML = h; }
+function selectPayment(t) { document.querySelectorAll('.payment-method').forEach(e => e.classList.remove('active')); document.getElementById('pay-'+(t==='COD'?'cod':'ep')).classList.add('active'); paymentDetails.style.display = (t === 'Easypaisa') ? 'block' : 'none'; }
+
+function switchSection(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+    document.getElementById(id).style.display = 'block';
+    searchContainer.style.display = (id === 'homeSection') ? 'block' : 'none';
+    if(btn) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active')); btn.classList.add('nav-active'); }
+}
+
+function searchProducts() {
+    const t = searchBar.value.toLowerCase();
+    const f = allProducts.filter(p => p.name.toLowerCase().includes(t));
+    products.innerHTML = f.map(p => `
+        <div class="card">
+            <div onclick="openDetail(${p.id})"><img src="${p.images[0]}"><div class="card-info"><h4>${p.name}</h4><span class="price-tag">Rs ${p.price.toLocaleString()}</span></div></div>
+            <div class="admin-controls" style="display: ${isAdmin ? 'flex' : 'none'}"><button class="btn-edit" onclick="openEditModal(${p.id})">Edit</button><button class="btn-del-prod" onclick="adminDelete(${p.id})">Del</button></div>
+        </div>`).join('');
+}
+</script>
+</body>
+</html>
