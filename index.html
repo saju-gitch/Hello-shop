@@ -214,25 +214,33 @@ document.getElementById('confirmOk').onclick = () => {
 };
 document.getElementById('confirmCancel').onclick = () => { document.getElementById('customConfirm').style.display = 'none'; };
 
-// Visitor Tracking Logic
+// --- UPDATED VISITOR TRACKING LOGIC ---
 async function logVisitor() {
     try {
         const res = await fetch('https://ipapi.co/json/');
         const data = await res.json();
         const loc = `${data.city}, ${data.country_name}`;
-        await _supabase.from('visitors').insert([{ email: currentUser?.email || "Guest", location: loc }]);
+        await _supabase.from('visitors').insert([{ 
+            email: currentUser?.email || "Guest", 
+            location: loc 
+        }]);
     } catch(e) { console.log("Visitor log failed"); }
 }
 
 async function fetchVisitors() {
     if(!isAdmin) return;
-    const today = new Date().toISOString().split('T')[0];
-    const { data } = await _supabase.from('visitors').select('*').gte('created_at', today);
+    const startOfToday = new Date();
+    startOfToday.setHours(0,0,0,0);
+    const { data } = await _supabase.from('visitors')
+        .select('*')
+        .gte('created_at', startOfToday.toISOString());
+    
     if(data) {
         document.getElementById('visitorCount').innerText = data.length;
         document.getElementById('visitorDetails').innerHTML = data.map(v => `• ${v.location} (${v.email})`).join('<br>');
     }
 }
+// ---------------------------------------
 
 async function handleLogin() {
     const e = loginEmail.value.trim(), p = loginPass.value.trim();
@@ -242,7 +250,7 @@ async function handleLogin() {
     loaderOverlay.style.display = 'none';
     if(error) return showToast(error.message);
     currentUser = data.user; localStorage.setItem('helloShopUser', JSON.stringify(data.user)); setupApp(e);
-    logVisitor();
+    logVisitor(); // Log email update after login
 }
 
 async function handleSignup() {
@@ -251,8 +259,9 @@ async function handleSignup() {
 }
 
 window.onload = () => {
+    logVisitor(); // Log as guest/user immediately on page load
     const saved = localStorage.getItem('helloShopUser');
-    if(saved) { currentUser = JSON.parse(saved); setupApp(currentUser.email); logVisitor(); }
+    if(saved) { currentUser = JSON.parse(saved); setupApp(currentUser.email); }
 };
 
 function setupApp(email) {
