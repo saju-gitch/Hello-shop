@@ -12,7 +12,11 @@
         #loaderOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.7); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .spinner-bg { width: 50px; height: 50px; border: 5px solid #e0e0e0; border-top: 5px solid #888888; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Custom Gray Popup Style */
         #customToast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gray-alert); color: white; padding: 12px 25px; border-radius: 8px; display: none; z-index: 5000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 14px; text-align: center; }
+        #customConfirm { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--gray-alert); color: white; padding: 20px; border-radius: 12px; display: none; z-index: 6000; width: 80%; max-width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
         header { background: var(--primary); color:white; padding:15px; text-align:center; font-weight:bold; font-size:20px; position: sticky; top:0; z-index:1000; }
         .search-area { background: white; padding: 10px; position: sticky; top: 55px; z-index: 999; border-bottom: 1px solid #eee; }
         #searchBar { width: 90%; padding: 10px 15px; display: block; margin: 0 auto; border: 1px solid #ddd; border-radius: 25px; outline: none; }
@@ -50,12 +54,24 @@
         .msg-them { align-self: flex-start; background: #eee; color: #333; }
         .user-pic-container { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin: 0 auto 10px; border: 3px solid var(--primary); }
         .payment-card { background: #fff8f5; border: 1px solid #ffccbc; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        
+        /* New Admin specific styles */
+        .admin-select-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .admin-select-header select { width: 60%; margin: 0; }
     </style>
 </head>
 <body>
 
 <div id="loaderOverlay"><div class="spinner-bg"></div></div>
 <div id="customToast">Notification</div>
+
+<div id="customConfirm">
+    <p id="confirmMsg" style="margin-bottom:20px;">Are you sure?</p>
+    <div style="display:flex; gap:10px;">
+        <button id="confirmOk" class="btn-main" style="padding:8px; font-size:12px;">OK</button>
+        <button id="confirmCancel" class="btn-main" style="padding:8px; font-size:12px; background:#666;">Cancel</button>
+    </div>
+</div>
 
 <header>HELLO SHOP</header>
 
@@ -116,7 +132,13 @@
     </div>
 
     <div id="ordersSection" class="section">
-        <h3 id="orderHeaderTitle" style="text-align: center;">📦 My Orders</h3>
+        <div class="admin-select-header" id="adminOrderHeader" style="display:none;">
+            <h3 style="margin:0;">📦 Orders</h3>
+            <select id="adminOrderSelect" onchange="toggleOrderDelBtn()"><option value="">Select Order</option></select>
+        </div>
+        <button id="adminDelOrderBtn" class="btn-main" style="display:none; margin-bottom:15px; background:var(--red);" onclick="deleteSelectedOrder()">Delete Order</button>
+        
+        <h3 id="userOrderTitle" style="text-align: center;">📦 My Orders</h3>
         <div id="userOrdersList"></div>
     </div>
 
@@ -156,7 +178,11 @@
             </div>
 
             <div id="adminPaymentProofs" style="display:none; margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd;">
-                <h4 style="margin:0 0 10px 0; color:var(--primary)">Verify Payment Proofs</h4>
+                <div class="admin-select-header">
+                    <h4 style="margin:0; color:var(--primary)">Payment Proofs</h4>
+                    <select id="adminProofSelect" onchange="toggleProofDelBtn()"><option value="">Select Proof</option></select>
+                </div>
+                <button id="adminDelProofBtn" class="btn-main" style="display:none; margin-bottom:15px; background:var(--red); padding:8px; font-size:12px;" onclick="deleteSelectedProof()">Delete Proof</button>
                 <div id="proofsList" style="font-size:12px;">No proofs yet.</div>
             </div>
 
@@ -180,6 +206,21 @@ const SUPABASE_KEY = "sb_publishable_OmqQDQdf7ye8KXbviwFYng_zPdbZpWb";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ADMIN_EMAIL = "ligerplaz@gmail.com";
 let currentUser = null, isAdmin = false, allProducts = [], adminBase64 = "", currentDetailProduct = null, userSavedAddress = "";
+let confirmCallback = null;
+
+// CUSTOM DIALOG LOGIC
+function openConfirm(msg, callback) {
+    document.getElementById('confirmMsg').innerText = msg;
+    document.getElementById('customConfirm').style.display = 'block';
+    confirmCallback = callback;
+}
+document.getElementById('confirmOk').onclick = () => {
+    document.getElementById('customConfirm').style.display = 'none';
+    if(confirmCallback) confirmCallback();
+};
+document.getElementById('confirmCancel').onclick = () => {
+    document.getElementById('customConfirm').style.display = 'none';
+};
 
 async function handleLogin() {
     const e = loginEmail.value.trim(), p = loginPass.value.trim();
@@ -212,7 +253,9 @@ function setupApp(email) {
         document.getElementById('adminNavBtn').style.display = 'flex';
         document.getElementById('cartNavBtn').style.display = 'none'; 
         document.getElementById('adminPaymentProofs').style.display = 'block';
-        document.getElementById('userAddressBook').style.display = 'none'; // Address Book Hide for Admin
+        document.getElementById('userAddressBook').style.display = 'none';
+        document.getElementById('adminOrderHeader').style.display = 'flex';
+        document.getElementById('userOrderTitle').style.display = 'none';
         fetchProofs();
     }
     loadProducts(); fetchOrders(); listenChat(); loadProfileData();
@@ -296,6 +339,11 @@ async function openDetail(id) {
 async function fetchOrders() {
     const { data } = await _supabase.from('orders').select('*').order('id', {ascending: false});
     const list = isAdmin ? (data || []) : (data ? data.filter(o => o.user_email === currentUser.email) : []);
+    
+    if(isAdmin) {
+        adminOrderSelect.innerHTML = '<option value="">Select Order</option>' + list.map(o => `<option value="${o.order_id}">${o.order_id} - ${o.customer_name}</option>`).join('');
+    }
+
     userOrdersList.innerHTML = list.map(o => `
         <div style="background:white; padding:15px; border-radius:10px; margin-bottom:10px; border-left:5px solid var(--primary)">
             <span class="status-badge ${o.status}">${o.status}</span>
@@ -312,21 +360,58 @@ async function fetchOrders() {
                 <option value="Shipped" ${o.status==='Shipped'?'selected':''}>Shipped</option>
                 <option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option>
                 <option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option>
-            </select>` : `<button class="btn-small btn-delete" style="margin-top:10px" onclick="deleteOrder('${o.order_id}')">Delete Order Record</button>`}
+            </select>` : `
+            <div style="margin-top:10px; display:flex; gap:5px;">
+                ${o.status === 'Pending' ? `<button class="btn-small" style="background:var(--blue); color:white" onclick="updateStatus('${o.order_id}', 'Cancelled')">Cancel Order</button>` : ''}
+                ${(o.status === 'Delivered' || o.status === 'Cancelled') ? `<button class="btn-small btn-delete" onclick="deleteOrder('${o.order_id}')">Delete Record</button>` : ''}
+            </div>
+            `}
         </div>`).join('');
 }
 
 async function fetchProofs() {
     const { data } = await _supabase.from('orders').select('*').not('trx_id', 'is', null).order('id', {ascending: false});
-    if(!data || data.length === 0) return;
+    if(!data) return;
+    
+    adminProofSelect.innerHTML = '<option value="">Select Proof</option>' + data.map(p => `<option value="${p.order_id}">${p.order_id} (Trx: ${p.trx_id})</option>`).join('');
+    
     proofsList.innerHTML = data.map(p => `
         <div style="border-bottom:1px solid #eee; padding:10px 0;">
             <b>Order: ${p.order_id}</b><br>
             Trx ID: ${p.trx_id}<br>
-            <img src="${p.trx_img}" style="width:100px; margin:5px 0; border:1px solid #ddd;"><br>
+            <img src="${p.trx_img}" style="width:100px; margin:5px 0; border:1px solid #ddd; cursor:pointer" onclick="window.open(this.src)"><br>
             <button class="btn-small btn-order" onclick="window.open('https://wa.me/${p.customer_phone}')">Confirm on WhatsApp</button>
         </div>
     `).join('');
+}
+
+// ADMIN DELETE ACTIONS
+function toggleOrderDelBtn() { adminDelOrderBtn.style.display = adminOrderSelect.value ? 'block' : 'none'; }
+function toggleProofDelBtn() { adminDelProofBtn.style.display = adminProofSelect.value ? 'block' : 'none'; }
+
+function deleteSelectedOrder() {
+    const id = adminOrderSelect.value;
+    openConfirm(`Delete Order ${id} permanently?`, async () => {
+        loaderOverlay.style.display = 'flex';
+        await _supabase.from('orders').delete().eq('order_id', id);
+        loaderOverlay.style.display = 'none';
+        showToast("Order Deleted!");
+        fetchOrders();
+        adminDelOrderBtn.style.display = 'none';
+    });
+}
+
+function deleteSelectedProof() {
+    const id = adminProofSelect.value;
+    openConfirm(`Remove Payment Proof for Order ${id}?`, async () => {
+        loaderOverlay.style.display = 'flex';
+        // Note: This only clears the proof fields, keeps the order
+        await _supabase.from('orders').update({ trx_id: null, trx_img: null }).eq('order_id', id);
+        loaderOverlay.style.display = 'none';
+        showToast("Proof Removed!");
+        fetchProofs();
+        adminDelProofBtn.style.display = 'none';
+    });
 }
 
 async function uploadDetails() {
@@ -339,9 +424,14 @@ async function uploadDetails() {
 function toBase64(file) { return new Promise((resolve) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); }); }
 function previewImg(input, id) { const r = new FileReader(); r.onload = e => { adminBase64 = e.target.result; document.getElementById(id).src = e.target.result; document.getElementById(id).style.display = 'block'; }; r.readAsDataURL(input.files[0]); }
 async function addNewProduct() { await _supabase.from('products').insert([{ name: pName.value, price: pPrice.value, img: adminBase64 }]); loadProducts(); }
-async function deleteProduct(id) { if(confirm("Delete?")) { await _supabase.from('products').delete().eq('id', id); loadProducts(); } }
-async function deleteOrder(id) { if(confirm("Delete?")) { await _supabase.from('orders').delete().eq('order_id', id); fetchOrders(); } }
-async function updateStatus(id, s) { await _supabase.from('orders').update({ status: s }).eq('order_id', id); fetchOrders(); }
+async function deleteProduct(id) { openConfirm("Delete product?", async () => { await _supabase.from('products').delete().eq('id', id); loadProducts(); }); }
+async function deleteOrder(id) { openConfirm("Delete record permanently?", async () => { await _supabase.from('orders').delete().eq('order_id', id); fetchOrders(); }); }
+async function updateStatus(id, s) { 
+    loaderOverlay.style.display = 'flex';
+    await _supabase.from('orders').update({ status: s }).eq('order_id', id); 
+    loaderOverlay.style.display = 'none';
+    fetchOrders(); 
+}
 
 function switchSection(id, btn) { 
     document.querySelectorAll('.section').forEach(s => s.style.display = 'none'); 
@@ -363,20 +453,28 @@ async function placeOrder() {
         return showToast("Fill all details & Upload Proof!");
     }
     loaderOverlay.style.display = 'flex';
-    const trxBase64 = await toBase64(trxImgFile);
-    await _supabase.from('orders').insert([{ 
-        order_id: 'ORD'+Math.floor(Math.random()*9000), 
-        user_email: currentUser.email, 
-        customer_name: orderName.value, 
-        customer_phone: orderPhone.value, 
-        total_price: cartTotal.innerText, 
-        status: 'Pending', 
-        address: orderAddress.value,
-        trx_id: trxId,
-        trx_img: trxBase64
-    }]);
-    loaderOverlay.style.display = 'none';
-    showToast("Order Placed & Proof Sent!"); switchSection('ordersSection'); fetchOrders();
+    try {
+        const trxBase64 = await toBase64(trxImgFile);
+        const { error } = await _supabase.from('orders').insert([{ 
+            order_id: 'ORD'+Math.floor(1000 + Math.random()*9000), 
+            user_email: currentUser.email, 
+            customer_name: orderName.value, 
+            customer_phone: orderPhone.value, 
+            total_price: cartTotal.innerText, 
+            status: 'Pending', 
+            address: orderAddress.value,
+            trx_id: trxId,
+            trx_img: trxBase64
+        }]);
+        if(error) throw error;
+        showToast("Order Placed Successfully!");
+        switchSection('ordersSection');
+        fetchOrders();
+    } catch (e) {
+        showToast("Error: " + e.message);
+    } finally {
+        loaderOverlay.style.display = 'none';
+    }
 }
 
 function showToast(m) { customToast.innerText = m; customToast.style.display = 'block'; setTimeout(()=>customToast.style.display='none',3000); }
