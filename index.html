@@ -214,30 +214,38 @@ document.getElementById('confirmOk').onclick = () => {
 };
 document.getElementById('confirmCancel').onclick = () => { document.getElementById('customConfirm').style.display = 'none'; };
 
-// --- UPDATED VISITOR TRACKING LOGIC ---
+// --- REPLACED VISITOR TRACKING LOGIC ---
 async function logVisitor() {
     try {
-        const res = await fetch('https://ipapi.co/json/');
-        const data = await res.json();
-        const loc = `${data.city}, ${data.country_name}`;
+        let loc = "Unknown Location";
+        try {
+            const res = await fetch('https://ipapi.co/json/');
+            const data = await res.json();
+            if(data.city) loc = `${data.city}, ${data.country_name}`;
+        } catch(apiErr) { console.log("Location API Error, logging as unknown."); }
+
         await _supabase.from('visitors').insert([{ 
             email: currentUser?.email || "Guest", 
             location: loc 
         }]);
-    } catch(e) { console.log("Visitor log failed"); }
+    } catch(e) { console.log("Visitor log failed completely."); }
 }
 
 async function fetchVisitors() {
     if(!isAdmin) return;
     const startOfToday = new Date();
     startOfToday.setHours(0,0,0,0);
-    const { data } = await _supabase.from('visitors')
+    const { data, error } = await _supabase.from('visitors')
         .select('*')
-        .gte('created_at', startOfToday.toISOString());
+        .gte('created_at', startOfToday.toISOString())
+        .order('created_at', { ascending: false });
     
     if(data) {
         document.getElementById('visitorCount').innerText = data.length;
-        document.getElementById('visitorDetails').innerHTML = data.map(v => `• ${v.location} (${v.email})`).join('<br>');
+        document.getElementById('visitorDetails').innerHTML = data.map(v => {
+            const time = new Date(v.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            return `• [${time}] ${v.location} (${v.email})`;
+        }).join('<br>');
     }
 }
 // ---------------------------------------
@@ -250,7 +258,7 @@ async function handleLogin() {
     loaderOverlay.style.display = 'none';
     if(error) return showToast(error.message);
     currentUser = data.user; localStorage.setItem('helloShopUser', JSON.stringify(data.user)); setupApp(e);
-    logVisitor(); // Log email update after login
+    logVisitor();
 }
 
 async function handleSignup() {
@@ -259,7 +267,7 @@ async function handleSignup() {
 }
 
 window.onload = () => {
-    logVisitor(); // Log as guest/user immediately on page load
+    logVisitor();
     const saved = localStorage.getItem('helloShopUser');
     if(saved) { currentUser = JSON.parse(saved); setupApp(currentUser.email); }
 };
