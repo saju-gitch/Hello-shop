@@ -7,51 +7,49 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #F85606; --bg: #f4f7f6; --gray-alert: #333333; --green-tick: #28a745; --red: #e74c3c; }
+        :root { --primary: #F85606; --bg: #f4f7f6; --gray-alert: #333333; --green-tick: #28a745; --red: #e74c3c; --blue: #3498db; }
         body { font-family: 'Poppins', sans-serif; margin:0; background: var(--bg); padding-bottom: 80px; overflow-x: hidden; }
-
         #loaderOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.7); display: none; justify-content: center; align-items: center; z-index: 9999; }
-        .spinner-bg { width: 60px; height: 60px; border: 6px solid #ccc; border-top: 6px solid var(--green-tick); border-radius: 50%; animation: spin 1s linear infinite; }
+        .spinner-bg { width: 50px; height: 50px; border: 5px solid #e0e0e0; border-top: 5px solid #888888; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        #customToast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gray-alert); color: white; padding: 12px 25px; border-radius: 8px; display: none; z-index: 5000; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 14px; }
-
+        #customToast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gray-alert); color: white; padding: 12px 25px; border-radius: 8px; display: none; z-index: 5000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 14px; text-align: center; }
         header { background: var(--primary); color:white; padding:15px; text-align:center; font-weight:bold; font-size:20px; position: sticky; top:0; z-index:1000; }
         .search-area { background: white; padding: 10px; position: sticky; top: 55px; z-index: 999; border-bottom: 1px solid #eee; }
         #searchBar { width: 90%; padding: 10px 15px; display: block; margin: 0 auto; border: 1px solid #ddd; border-radius: 25px; outline: none; }
-
         #products { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
-        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; }
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; cursor: pointer; }
         .card img { width: 100%; height: 140px; object-fit: cover; }
         .card-info { padding: 10px; }
         .price-tag { color: var(--primary); font-weight: 700; }
-
         .btn-group { display: flex; flex-direction: column; gap: 5px; padding: 0 10px 10px; }
         .btn-small { border: none; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; }
-        .btn-cart { background: #eee; }
         .btn-order { background: var(--primary); color: white; }
-
-        .admin-edit-bar { display: none; background: #fff; padding: 5px; justify-content: space-around; border-bottom: 1px solid #eee; }
-        .admin-edit-bar button { font-size: 11px; color: var(--primary); border: none; background: none; cursor: pointer; font-weight: bold; }
-
-        .support-btn { position: fixed; bottom: 85px; right: 20px; width: 60px; height: 60px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; z-index: 1500; cursor: pointer; border: none; }
-
-        #proofSection { display: none; background: #fff; padding: 15px; border-radius: 12px; margin-top: 10px; border: 2px solid var(--primary); }
-
+        .btn-delete { background: var(--red); color: white; }
+        .section { display: none; padding: 15px; }
+        .active-section { display: block; }
+        input, select, textarea { width: 92%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .slider { display: flex; overflow-x: auto; gap: 10px; scroll-snap-type: x mandatory; margin-bottom: 15px; }
+        .slider img { width: 100%; flex-shrink: 0; scroll-snap-align: start; border-radius: 12px; height: 250px; object-fit: cover; }
+        .old-price { text-decoration: line-through; color: var(--red); font-size: 14px; margin-right: 10px; }
+        .new-price { color: var(--green-tick); font-size: 20px; font-weight: bold; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; float: right; }
+        .Pending { background: #ffeaa7; color: #d35400; }
+        .Packed { background: #e0f2f1; color: #00796b; }
+        .Shipped { background: #d1d8ff; color: #2980b9; }
+        .Delivered { background: #c8e6c9; color: #2e7d32; }
+        .Cancelled { background: #f3f4f6; color: #6b7280; }
         .bottomNav { position:fixed; bottom:0; width:100%; height:70px; background: white; display:flex; justify-content:space-around; align-items:center; box-shadow:0 -3px 15px rgba(0,0,0,0.1); z-index: 1000; }
         .nav-item { background: none; border: none; font-size: 10px; color: #666; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
         .nav-active { color: var(--primary); font-weight: bold; }
-
-        .section { display: none; padding: 15px; }
-        .active-section { display: block; }
-        input, textarea { width: 92%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; font-weight: 600; cursor: pointer; }
-
-        .payment-method { border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin: 8px 0; cursor: pointer; }
-        .payment-method.active { border: 2px solid var(--primary); background: #fff5f0; }
-        
-        #adminDashboard { display: none; background: #fff; padding: 15px; margin-top: 20px; border-top: 5px solid #333; }
-        .preview-img { width: 80px; height: 80px; object-fit: cover; display: none; margin: 10px 0; border-radius: 5px; }
+        #chatBtn { position: fixed; right: 20px; bottom: 85px; background: var(--primary); color: white; width: 55px; height: 55px; border-radius: 50%; display: none; justify-content: center; align-items: center; font-size: 24px; z-index: 1001; }
+        #chatWindow { position: fixed; right: 15px; bottom: 85px; width: 300px; height: 400px; background: white; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: none; flex-direction: column; z-index: 2000; overflow: hidden; border: 1px solid #eee; }
+        #chatMessages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: #f9f9f9; }
+        .msg { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 13px; }
+        .msg-me { align-self: flex-end; background: var(--primary); color: white; }
+        .msg-them { align-self: flex-start; background: #eee; color: #333; }
+        .user-pic-container { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin: 0 auto 10px; border: 3px solid var(--primary); }
+        .payment-card { background: #fff8f5; border: 1px solid #ffccbc; padding: 15px; border-radius: 8px; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -59,87 +57,120 @@
 <div id="loaderOverlay"><div class="spinner-bg"></div></div>
 <div id="customToast">Notification</div>
 
-<button class="support-btn" id="supportBtn" style="display:none;" onclick="window.open('https://wa.me/923299469804')">💬</button>
-
 <header>HELLO SHOP</header>
+
+<div id="chatBtn" onclick="toggleChat()">💬</div>
+<div id="chatWindow">
+    <div style="background:var(--primary); color:white; padding:12px; font-weight:bold; display:flex; justify-content:space-between;">
+        <span>Support</span> <span onclick="toggleChat()" style="cursor:pointer">✖</span>
+    </div>
+    <div id="chatMessages"></div>
+    <div style="display:flex; padding:10px; border-top:1px solid #eee;">
+        <input type="text" id="chatInput" placeholder="Message..." style="margin:0; flex:1;">
+        <button onclick="sendMsg()" style="border:none; color:var(--primary); background:none; font-weight:bold; padding-left:10px;">Send</button>
+    </div>
+</div>
 
 <div id="authPage" class="section active-section">
     <div style="text-align: center; padding-top: 50px;">
-        <h2 style="color:var(--primary)">Login to Continue</h2>
+        <h2 style="color:var(--primary)">Login / Signup</h2>
         <input type="email" id="loginEmail" placeholder="Email">
         <input type="password" id="loginPass" placeholder="Password">
         <button class="btn-main" onclick="handleLogin()">Login</button>
-        <p>New user?</p>
-        <button class="btn-main" style="background:#444" onclick="handleSignup()">Signup</button>
+        <button class="btn-main" style="background:#444; margin-top:10px" onclick="handleSignup()">Create Account</button>
     </div>
 </div>
 
 <div id="mainApp" style="display:none;">
-    <div class="search-area" id="searchContainer">
-        <input type="text" id="searchBar" placeholder="Search Products..." onkeyup="searchProducts()">
+    <div id="homeSection" class="section active-section">
+        <div class="search-area"><input type="text" id="searchBar" placeholder="Search..." onkeyup="searchProducts()"></div>
+        <div id="products">Loading...</div>
     </div>
 
-    <div id="homeSection" class="section active-section">
-        <div id="products"></div>
-        
-        <div id="adminDashboard">
-            <h3 style="color:var(--primary)">Admin Panel</h3>
+    <div id="adminPanelSection" class="section">
+        <div style="background: white; padding: 15px; border-radius: 12px; border:1px solid #ddd;">
+            <h3 style="margin-top:0; color:var(--primary)">Admin Panel</h3>
             <input type="text" id="pName" placeholder="Product Name">
-            <input type="number" id="pPrice" placeholder="Price">
-            <label style="font-size:12px; color:#666;">Gallery Image:</label>
-            <input type="file" id="pImgFile" accept="image/*" onchange="previewAdminImage(this)">
-            <img id="adminPreview" class="preview-img">
-            <button class="btn-main" id="adminActionBtn" onclick="addNewProduct()">Add Product</button>
+            <input type="number" id="pPrice" placeholder="Base Price">
+            <input type="file" id="pImgFile" accept="image/*" onchange="previewImg(this, 'adminP')">
+            <img id="adminP" style="width:70px; display:none; margin:10px auto;">
+            <button class="btn-main" onclick="addNewProduct()">Add Product (Home)</button>
             <hr>
-            <h4>Admin Orders View</h4>
-            <div id="adminOrdersList"></div>
+            <h4>Upload Details</h4>
+            <select id="detailSelectProduct"></select>
+            <input type="number" id="detailDiscPrice" placeholder="Discount Price">
+            <textarea id="detailDesc" placeholder="Description" rows="4"></textarea>
+            <input type="file" id="detailPics" accept="image/*" multiple>
+            <button class="btn-main" style="background:#444" onclick="uploadDetails()">Save Full Details</button>
         </div>
+    </div>
+
+    <div id="productDetailPage" class="section">
+        <button onclick="switchSection('homeSection')" style="border:none; background:none; color:var(--primary); font-weight:bold; margin-bottom:15px;">← Back</button>
+        <div id="detailSlider" class="slider"></div>
+        <h2 id="detailTitle"></h2>
+        <div><span id="detailOldPrice" class="old-price"></span><span id="detailNewPrice" class="new-price"></span></div>
+        <p id="detailDescription"></p>
+        <button class="btn-main" onclick="buyNowFromDetail()">Buy Now</button>
+        <button class="btn-main" style="background:var(--blue); margin-top:10px" onclick="showToast('Added to Cart!')">Add to Cart</button>
     </div>
 
     <div id="ordersSection" class="section">
-        <h3 style="text-align: center;">📦 My Orders</h3>
-        <div id="userOrdersList">No orders yet.</div>
+        <h3 id="orderHeaderTitle" style="text-align: center;">📦 My Orders</h3>
+        <div id="userOrdersList"></div>
     </div>
 
     <div id="cartSection" class="section">
-        <h3 style="text-align: center;">Checkout</h3>
-        <div id="cartItems"></div>
-        <div id="checkoutForm">
-            <input type="text" id="orderName" placeholder="Full Name">
-            <input type="number" id="orderPhone" placeholder="WhatsApp / Phone Number">
-            <div id="addressList"></div>
-            <h4>Payment Method</h4>
-            <div class="payment-method active" id="pay-cod" onclick="setPayment('COD')">Cash on Delivery</div>
-            <div class="payment-method" id="pay-ep" onclick="setPayment('JazzCash')">JazzCash / Easypaisa</div>
-            <div id="paymentInstructions" style="display:none; padding:10px; background:#e3f2fd; border-radius:8px;">
-                <b>JazzCash: 03299469804 (SAJAWAL NAZEER)</b>
-            </div>
-            <button class="btn-main" style="background:var(--green-tick); margin-top:10px" onclick="initiateOrder()">Place Order (Total: Rs <span id="cartTotal">0</span>)</button>
+        <h3>Checkout</h3>
+        <div id="cartItems" style="background:#fff; padding:10px; border-radius:8px; margin-bottom:10px;"></div>
+        <div class="payment-card">
+            <p style="margin-top:0; font-weight:bold; color:var(--primary)">Payment Method:</p>
+            <p style="margin:2px 0; font-size:14px;"><b>JazzCash:</b> 03299469804</p>
+            <p style="margin:2px 0; font-size:14px;"><b>Account Name:</b> SAJAWAL NAZEER</p>
+            <small style="color:#666">Please upload proof below to confirm order.</small>
+        </div>
+        <input type="text" id="orderName" placeholder="Full Name">
+        <input type="number" id="orderPhone" placeholder="WhatsApp Number">
+        <textarea id="orderAddress" placeholder="Full Address" rows="2"></textarea>
+        
+        <div style="background:white; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:10px;">
+            <label style="font-size:12px; font-weight:bold;">Transaction ID</label>
+            <input type="text" id="orderTrxId" placeholder="Enter Trx ID" style="margin:5px 0;">
+            <label style="font-size:12px; font-weight:bold;">Payment Screenshot</label>
+            <input type="file" id="orderTrxImg" accept="image/*" style="font-size:11px;">
         </div>
 
-        <div id="proofSection">
-            <h4>Submit Payment Proof</h4>
-            <input type="text" id="tidInput" placeholder="Transaction ID (TID)">
-            <input type="file" id="proofImg" accept="image/*">
-            <button class="btn-main" onclick="submitProof()">Submit Proof</button>
-        </div>
+        <button class="btn-main" style="background:var(--green-tick); margin-top:10px;" onclick="placeOrder()">Confirm Order (Rs <span id="cartTotal">0</span>)</button>
     </div>
 
     <div id="profileSection" class="section">
         <div style="text-align:center">
-            <h3 id="displayEmail">User</h3>
-            <div id="savedAddresses"></div>
-            <input type="text" id="newAddr" placeholder="New Address">
-            <button class="btn-main" onclick="saveAddress()">Add Address</button>
-            <button class="btn-main" style="background:#888; margin-top:20px" onclick="location.reload()">Logout</button>
+            <div class="user-pic-container"><img id="userProfilePic" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:100%; height:100%; object-fit:cover;"></div>
+            <input type="file" id="userPicInput" style="display:none" onchange="uploadProfilePic(this)">
+            <button class="btn-main" style="width:60%; font-size:12px; padding:8px; margin-bottom:10px" onclick="document.getElementById('userPicInput').click()">Upload Photo</button>
+            
+            <div id="userAddressBook" style="margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd;">
+                <label style="font-weight:bold; font-size:14px;">My Address Book</label>
+                <textarea id="profileAddressInput" placeholder="Enter your delivery address..." rows="3"></textarea>
+                <button class="btn-main" style="font-size:12px; padding:8px;" onclick="saveUserAddress()">Save Address</button>
+            </div>
+
+            <div id="adminPaymentProofs" style="display:none; margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd;">
+                <h4 style="margin:0 0 10px 0; color:var(--primary)">Verify Payment Proofs</h4>
+                <div id="proofsList" style="font-size:12px;">No proofs yet.</div>
+            </div>
+
+            <h3 id="displayEmail" style="margin-top:20px">User</h3>
+            <button class="btn-main" style="background:#888" onclick="userLogout()">Logout</button>
         </div>
     </div>
 </div>
 
 <div id="bottomNav" class="bottomNav" style="display:none;">
     <button class="nav-item nav-active" onclick="switchSection('homeSection', this)"><span>🏠</span>Home</button>
+    <button id="cartNavBtn" class="nav-item" onclick="switchSection('cartSection', this)"><span>🛒</span>Cart</button>
     <button class="nav-item" onclick="switchSection('ordersSection', this)"><span>📦</span>Orders</button>
-    <button class="nav-item" onclick="switchSection('cartSection', this)"><span>🛒</span>Cart</button>
+    <button id="adminNavBtn" class="nav-item" style="display:none" onclick="switchSection('adminPanelSection', this)"><span>⚙️</span>Admin</button>
     <button class="nav-item" onclick="switchSection('profileSection', this)"><span>👤</span>Profile</button>
 </div>
 
@@ -147,215 +178,220 @@
 const SUPABASE_URL = "https://urrqpsmhlzldtxzstnuu.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OmqQDQdf7ye8KXbviwFYng_zPdbZpWb";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 const ADMIN_EMAIL = "ligerplaz@gmail.com";
-let cart = [], currentUser = null, isAdmin = false, currentPayment = 'COD', userOrders = [], editingId = null, currentBase64 = "";
-
-let allProducts = Array.from({length: 20}, (_, i) => ({
-    id: i+1, name: `Premium Product ${i+1}`, price: 1500 + (i*200), img: `https://picsum.photos/id/${i+55}/400/400`
-}));
-
-function showToast(msg) {
-    const t = document.getElementById('customToast');
-    t.innerText = msg; t.style.display = 'block';
-    setTimeout(() => t.style.display = 'none', 3000);
-}
-
-function previewAdminImage(input) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            currentBase64 = e.target.result;
-            const img = document.getElementById('adminPreview');
-            img.src = currentBase64; img.style.display = "block";
-        }
-        reader.readAsDataURL(input.files[0]);
-    }
-}
+let currentUser = null, isAdmin = false, allProducts = [], adminBase64 = "", currentDetailProduct = null, userSavedAddress = "";
 
 async function handleLogin() {
-    const email = document.getElementById('loginEmail').value;
-    const pass = document.getElementById('loginPass').value;
-    document.getElementById('loaderOverlay').style.display = 'flex';
-    const { data, error } = await _supabase.auth.signInWithPassword({ email, password: pass });
-    document.getElementById('loaderOverlay').style.display = 'none';
-    if(error) showToast(error.message);
-    else {
-        currentUser = data.user; isAdmin = (email === ADMIN_EMAIL);
-        document.getElementById('authPage').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
-        document.getElementById('bottomNav').style.display = 'flex';
-        document.getElementById('supportBtn').style.display = 'flex';
-        document.getElementById('displayEmail').innerText = email;
-        if(isAdmin) document.getElementById('adminDashboard').style.display = 'block';
-        loadProducts();
-    }
+    const e = loginEmail.value.trim(), p = loginPass.value.trim();
+    if(!e || !p) return showToast("Enter credentials");
+    loaderOverlay.style.display = 'flex';
+    const { data, error } = await _supabase.auth.signInWithPassword({ email: e, password: p });
+    loaderOverlay.style.display = 'none';
+    if(error) return showToast(error.message);
+    currentUser = data.user; localStorage.setItem('helloShopUser', JSON.stringify(data.user)); setupApp(e);
 }
 
 async function handleSignup() {
-    const email = document.getElementById('loginEmail').value;
-    const pass = document.getElementById('loginPass').value;
-    document.getElementById('loaderOverlay').style.display = 'flex';
-    const { error } = await _supabase.auth.signUp({ email, password: pass });
-    document.getElementById('loaderOverlay').style.display = 'none';
-    if(error) showToast(error.message); else showToast("Verify Email!");
+    const { error } = await _supabase.auth.signUp({ email: loginEmail.value, password: loginPass.value });
+    if(error) showToast(error.message); else showToast("Check Email!");
 }
 
-function loadProducts() {
-    document.getElementById('products').innerHTML = allProducts.map(p => `
-        <div class="card">
-            <div class="admin-edit-bar" style="display:${isAdmin?'flex':'none'}">
-                <button onclick="editProduct(${p.id})">EDIT</button>
-                <button onclick="deleteProduct(${p.id})">DELETE</button>
-            </div>
+window.onload = () => {
+    const saved = localStorage.getItem('helloShopUser');
+    if(saved) { currentUser = JSON.parse(saved); setupApp(currentUser.email); }
+};
+
+function setupApp(email) {
+    isAdmin = (email === ADMIN_EMAIL);
+    document.getElementById('authPage').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('bottomNav').style.display = 'flex';
+    document.getElementById('chatBtn').style.display = 'flex';
+    document.getElementById('displayEmail').innerText = email;
+    if(isAdmin) {
+        document.getElementById('adminNavBtn').style.display = 'flex';
+        document.getElementById('cartNavBtn').style.display = 'none'; 
+        document.getElementById('adminPaymentProofs').style.display = 'block';
+        document.getElementById('userAddressBook').style.display = 'none'; // Address Book Hide for Admin
+        fetchProofs();
+    }
+    loadProducts(); fetchOrders(); listenChat(); loadProfileData();
+}
+
+async function loadProfileData() {
+    const { data } = await _supabase.from('profiles').select('*').eq('email', currentUser.email).maybeSingle();
+    if(data) {
+        if(data.profile_pic) document.getElementById('userProfilePic').src = data.profile_pic;
+        if(data.address) {
+            userSavedAddress = data.address;
+            document.getElementById('profileAddressInput').value = data.address;
+            document.getElementById('orderAddress').value = data.address;
+        }
+    }
+}
+
+async function saveUserAddress() {
+    const addr = document.getElementById('profileAddressInput').value;
+    loaderOverlay.style.display = 'flex';
+    await _supabase.from('profiles').upsert([{ email: currentUser.email, address: addr }], { onConflict: 'email' });
+    userSavedAddress = addr;
+    document.getElementById('orderAddress').value = addr;
+    loaderOverlay.style.display = 'none';
+    showToast("Address Saved!");
+}
+
+async function uploadProfilePic(input) {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        loaderOverlay.style.display = 'flex';
+        await _supabase.from('profiles').upsert([{ email: currentUser.email, profile_pic: e.target.result }], { onConflict: 'email' });
+        document.getElementById('userProfilePic').src = e.target.result;
+        loaderOverlay.style.display = 'none';
+        showToast("Photo Updated!");
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+async function loadProducts() {
+    loaderOverlay.style.display = 'flex';
+    const { data } = await _supabase.from('products').select('*').order('id', {ascending: false});
+    allProducts = data || [];
+    renderHomeProducts(allProducts);
+    detailSelectProduct.innerHTML = allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    loaderOverlay.style.display = 'none';
+}
+
+function renderHomeProducts(list) {
+    products.innerHTML = list.map(p => `
+        <div class="card" onclick="${!isAdmin ? `openDetail(${p.id})` : ''}">
             <img src="${p.img}">
             <div class="card-info"><h4>${p.name}</h4><span class="price-tag">Rs ${p.price}</span></div>
             <div class="btn-group">
-                <button class="btn-small btn-cart" onclick="addToCart(${p.id})">Add to Cart</button>
-                <button class="btn-small btn-order" onclick="buyNow(${p.id})">Place Order</button>
+                ${isAdmin ? `<button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteProduct(${p.id})">DELETE</button>` 
+                : `<button class="btn-small btn-order" onclick="event.stopPropagation(); openDetail(${p.id})">View Details</button>`}
             </div>
         </div>`).join('');
 }
 
-function addNewProduct() {
-    const name = document.getElementById('pName').value;
-    const price = document.getElementById('pPrice').value;
-    if(!name || !price || !currentBase64) return showToast("Enter Details & Image!");
-    allProducts.unshift({ id: Date.now(), name, price, img: currentBase64 });
-    resetAdminPanel(); loadProducts(); showToast("Added!");
-}
-
-function editProduct(id) {
+async function openDetail(id) {
     const p = allProducts.find(x => x.id === id);
-    document.getElementById('pName').value = p.name;
-    document.getElementById('pPrice').value = p.price;
-    editingId = id;
-    document.getElementById('adminActionBtn').innerText = "Update Product";
-    document.getElementById('adminActionBtn').onclick = saveUpdate;
-    window.scrollTo(0, document.body.scrollHeight);
+    currentDetailProduct = p;
+    loaderOverlay.style.display = 'flex';
+    const { data } = await _supabase.from('product_details').select('*').eq('product_id', id).maybeSingle();
+    loaderOverlay.style.display = 'none';
+    document.getElementById('detailTitle').innerText = p.name;
+    document.getElementById('detailOldPrice').innerText = "Rs " + p.price;
+    if(data) {
+        document.getElementById('detailDescription').innerText = data.description;
+        document.getElementById('detailNewPrice').innerText = "Rs " + data.discount_price;
+        detailSlider.innerHTML = (data.images || [p.img]).map(img => `<img src="${img}">`).join('');
+    } else {
+        document.getElementById('detailDescription').innerText = "No details.";
+        document.getElementById('detailNewPrice').innerText = "Rs " + p.price;
+        detailSlider.innerHTML = `<img src="${p.img}">`;
+    }
+    switchSection('productDetailPage');
 }
 
-function saveUpdate() {
-    const p = allProducts.find(x => x.id === editingId);
-    p.name = document.getElementById('pName').value;
-    p.price = document.getElementById('pPrice').value;
-    if(currentBase64) p.img = currentBase64;
-    resetAdminPanel(); loadProducts(); showToast("Updated!");
-}
-
-function deleteProduct(id) {
-    allProducts = allProducts.filter(p => p.id !== id);
-    loadProducts(); showToast("Deleted!");
-}
-
-function resetAdminPanel() {
-    editingId = null; currentBase64 = "";
-    document.getElementById('pName').value = "";
-    document.getElementById('pPrice').value = "";
-    document.getElementById('pImgFile').value = "";
-    document.getElementById('adminPreview').style.display = "none";
-    document.getElementById('adminActionBtn').innerText = "Add Product";
-    document.getElementById('adminActionBtn').onclick = addNewProduct;
-}
-
-function addToCart(id) {
-    const p = allProducts.find(x => x.id === id);
-    cart.push({...p, cartId: Date.now()}); updateCart(); showToast("Added!");
-}
-
-function buyNow(id) {
-    const p = allProducts.find(x => x.id === id);
-    cart = [{...p, cartId: Date.now()}]; updateCart(); switchSection('cartSection');
-}
-
-function updateCart() {
-    let total = 0;
-    document.getElementById('cartItems').innerHTML = cart.map(i => {
-        total += i.price;
-        return `<div style="padding:10px; background:#fff; border-radius:8px; margin-bottom:5px;">${i.name} - Rs ${i.price}</div>`;
-    }).join('');
-    document.getElementById('cartTotal').innerText = total;
-}
-
-function setPayment(type) {
-    currentPayment = type;
-    document.querySelectorAll('.payment-method').forEach(e => e.classList.remove('active'));
-    document.getElementById(type === 'COD' ? 'pay-cod' : 'pay-ep').classList.add('active');
-    document.getElementById('paymentInstructions').style.display = (type === 'JazzCash') ? 'block' : 'none';
-}
-
-function initiateOrder() {
-    const phone = document.getElementById('orderPhone').value;
-    const name = document.getElementById('orderName').value;
-    if(cart.length === 0 || !phone || !name) return showToast("Fill All Details!");
-    
-    const newOrder = {
-        id: 'ORD-'+Math.floor(Math.random()*9999), user: currentUser.email, 
-        uName: name, uPhone: phone, items: [...cart], total: document.getElementById('cartTotal').innerText, status: 'Pending'
-    };
-    userOrders.unshift(newOrder);
-    if(isAdmin) showToast("ADMIN: New Order Recieved!");
-    
-    if(currentPayment === 'JazzCash') {
-        document.getElementById('checkoutForm').style.display = 'none';
-        document.getElementById('proofSection').style.display = 'block';
-    } else { finalizeOrder(); }
-}
-
-function submitProof() {
-    showToast("Proof Sent!"); finalizeOrder();
-}
-
-function finalizeOrder() {
-    showToast("Order Placed!");
-    cart = []; updateCart(); renderOrders();
-    document.getElementById('proofSection').style.display = 'none';
-    document.getElementById('checkoutForm').style.display = 'block';
-    switchSection('ordersSection');
-}
-
-function renderOrders() {
-    document.getElementById('userOrdersList').innerHTML = userOrders.map(o => `
-        <div style="background:white; padding:15px; border-radius:10px; margin-bottom:10px; border-left:5px solid orange">
-            <b>${o.id}</b> | Total: Rs ${o.total}<br>
-            <button style="background:red; color:white; border:none; padding:5px; margin-top:5px" onclick="cancelOrder('${o.id}')">Cancel</button>
+async function fetchOrders() {
+    const { data } = await _supabase.from('orders').select('*').order('id', {ascending: false});
+    const list = isAdmin ? (data || []) : (data ? data.filter(o => o.user_email === currentUser.email) : []);
+    userOrdersList.innerHTML = list.map(o => `
+        <div style="background:white; padding:15px; border-radius:10px; margin-bottom:10px; border-left:5px solid var(--primary)">
+            <span class="status-badge ${o.status}">${o.status}</span>
+            <b>ID: ${o.order_id}</b><br>
+            <small>Total: Rs ${o.total_price}</small>
+            ${isAdmin ? `<div style="font-size:11px; margin-top:5px; padding:5px; background:#f9f9f9">
+                👤 <b>Customer:</b> ${o.customer_name}<br>
+                📞 <b>WhatsApp:</b> ${o.customer_phone}<br>
+                📍 <b>Address:</b> ${o.address}
+            </div>
+            <select style="margin-top:10px" onchange="updateStatus('${o.order_id}', this.value)">
+                <option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option>
+                <option value="Packed" ${o.status==='Packed'?'selected':''}>Packed</option>
+                <option value="Shipped" ${o.status==='Shipped'?'selected':''}>Shipped</option>
+                <option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option>
+                <option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option>
+            </select>` : `<button class="btn-small btn-delete" style="margin-top:10px" onclick="deleteOrder('${o.order_id}')">Delete Order Record</button>`}
         </div>`).join('');
-    if(isAdmin) renderAdminOrders();
 }
 
-function renderAdminOrders() {
-    document.getElementById('adminOrdersList').innerHTML = userOrders.map(o => `<div style="font-size:11px; border-bottom:1px solid #ddd; padding:5px;">${o.uName} (${o.uPhone}) - ${o.total}</div>`).join('');
+async function fetchProofs() {
+    const { data } = await _supabase.from('orders').select('*').not('trx_id', 'is', null).order('id', {ascending: false});
+    if(!data || data.length === 0) return;
+    proofsList.innerHTML = data.map(p => `
+        <div style="border-bottom:1px solid #eee; padding:10px 0;">
+            <b>Order: ${p.order_id}</b><br>
+            Trx ID: ${p.trx_id}<br>
+            <img src="${p.trx_img}" style="width:100px; margin:5px 0; border:1px solid #ddd;"><br>
+            <button class="btn-small btn-order" onclick="window.open('https://wa.me/${p.customer_phone}')">Confirm on WhatsApp</button>
+        </div>
+    `).join('');
 }
 
-function cancelOrder(id) {
-    userOrders = userOrders.filter(o => o.id !== id);
-    showToast("Cancelled!"); renderOrders();
+async function uploadDetails() {
+    let imgs = []; loaderOverlay.style.display = 'flex';
+    for(let f of detailPics.files) { imgs.push(await toBase64(f)); }
+    await _supabase.from('product_details').upsert([{ product_id: detailSelectProduct.value, description: detailDesc.value, discount_price: detailDiscPrice.value, images: imgs }], { onConflict: 'product_id' });
+    loaderOverlay.style.display = 'none'; showToast("Saved!"); switchSection('homeSection');
 }
 
-function saveAddress() {
-    const a = document.getElementById('newAddr').value;
-    if(a) { 
-        document.getElementById('savedAddresses').innerHTML += `<div class="payment-method">${a}</div>`;
-        document.getElementById('addressList').innerHTML += `<div class="payment-method">${a}</div>`;
-        document.getElementById('newAddr').value = "";
+function toBase64(file) { return new Promise((resolve) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); }); }
+function previewImg(input, id) { const r = new FileReader(); r.onload = e => { adminBase64 = e.target.result; document.getElementById(id).src = e.target.result; document.getElementById(id).style.display = 'block'; }; r.readAsDataURL(input.files[0]); }
+async function addNewProduct() { await _supabase.from('products').insert([{ name: pName.value, price: pPrice.value, img: adminBase64 }]); loadProducts(); }
+async function deleteProduct(id) { if(confirm("Delete?")) { await _supabase.from('products').delete().eq('id', id); loadProducts(); } }
+async function deleteOrder(id) { if(confirm("Delete?")) { await _supabase.from('orders').delete().eq('order_id', id); fetchOrders(); } }
+async function updateStatus(id, s) { await _supabase.from('orders').update({ status: s }).eq('order_id', id); fetchOrders(); }
+
+function switchSection(id, btn) { 
+    document.querySelectorAll('.section').forEach(s => s.style.display = 'none'); 
+    document.getElementById(id).style.display = 'block'; 
+    if(btn) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active')); btn.classList.add('nav-active'); }
+}
+
+function buyNowFromDetail() { 
+    cartItems.innerHTML = `<b>${currentDetailProduct.name}</b>`; 
+    cartTotal.innerText = document.getElementById('detailNewPrice').innerText.replace('Rs ', ''); 
+    document.getElementById('orderAddress').value = userSavedAddress;
+    switchSection('cartSection'); 
+}
+
+async function placeOrder() {
+    const trxId = document.getElementById('orderTrxId').value;
+    const trxImgFile = document.getElementById('orderTrxImg').files[0];
+    if(!orderName.value || !orderPhone.value || !orderAddress.value || !trxId || !trxImgFile) {
+        return showToast("Fill all details & Upload Proof!");
     }
+    loaderOverlay.style.display = 'flex';
+    const trxBase64 = await toBase64(trxImgFile);
+    await _supabase.from('orders').insert([{ 
+        order_id: 'ORD'+Math.floor(Math.random()*9000), 
+        user_email: currentUser.email, 
+        customer_name: orderName.value, 
+        customer_phone: orderPhone.value, 
+        total_price: cartTotal.innerText, 
+        status: 'Pending', 
+        address: orderAddress.value,
+        trx_id: trxId,
+        trx_img: trxBase64
+    }]);
+    loaderOverlay.style.display = 'none';
+    showToast("Order Placed & Proof Sent!"); switchSection('ordersSection'); fetchOrders();
 }
 
-function switchSection(id, btn) {
-    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-    document.getElementById(id).style.display = 'block';
-    if(btn) {
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
-        btn.classList.add('nav-active');
-    }
+function showToast(m) { customToast.innerText = m; customToast.style.display = 'block'; setTimeout(()=>customToast.style.display='none',3000); }
+function userLogout() { localStorage.removeItem('helloShopUser'); location.reload(); }
+function toggleChat() { chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex'; }
+async function sendMsg() { await _supabase.from('messages').insert([{ sender: currentUser.email, text: chatInput.value, receiver: isAdmin ? "CUSTOMER" : ADMIN_EMAIL }]); chatInput.value = ""; }
+function listenChat() { _supabase.channel('any').on('postgres_changes', { event: 'INSERT', table: 'messages' }, () => renderMessages()).subscribe(); renderMessages(); }
+async function renderMessages() {
+    const { data } = await _supabase.from('messages').select('*').order('created_at', {ascending: true});
+    if(!data) return;
+    chatMessages.innerHTML = data.filter(m => m.sender === currentUser.email || m.receiver === currentUser.email || isAdmin)
+    .map(m => `<div class="msg ${m.sender === currentUser.email ? 'msg-me' : 'msg-them'}">${m.text}</div>`).join('');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
-function searchProducts() {
-    const t = searchBar.value.toLowerCase();
-    const f = allProducts.filter(p => p.name.toLowerCase().includes(t));
-    document.getElementById('products').innerHTML = f.map(p => `
-        <div class="card"><img src="${p.img}"><div class="card-info"><h4>${p.name}</h4><span class="price-tag">Rs ${p.price}</span></div><div class="btn-group"><button class="btn-small btn-cart" onclick="addToCart(${p.id})">Add to Cart</button><button class="btn-small btn-order" onclick="buyNow(${p.id})">Place Order</button></div></div>`).join('');
-}
+function searchProducts() { renderHomeProducts(allProducts.filter(p => p.name.toLowerCase().includes(searchBar.value.toLowerCase()))); }
 </script>
 </body>
 </html>
