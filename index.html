@@ -30,7 +30,7 @@
         .btn-delete { background: var(--red); color: white; }
         .section { display: none; padding: 15px; }
         .active-section { display: block; }
-        input, select, textarea { width: 92%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
+        input, select, textarea { width: 92%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; box-sizing: border-box; }
         .btn-main { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; font-weight: 600; cursor: pointer; }
         .slider { display: flex; overflow-x: auto; gap: 10px; scroll-snap-type: x mandatory; margin-bottom: 15px; }
         .slider img { width: 100%; flex-shrink: 0; scroll-snap-align: start; border-radius: 12px; height: 250px; object-fit: cover; }
@@ -39,11 +39,6 @@
         .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; float: right; }
         .stock-badge { display: inline-block; padding: 2px 8px; background: #e8f5e9; color: #2e7d32; border-radius: 5px; font-size: 12px; margin-bottom: 10px; font-weight: 600; }
         .out-of-stock { background: #ffebee; color: #c62828; }
-        .Pending { background: #ffeaa7; color: #d35400; }
-        .Packed { background: #e0f2f1; color: #00796b; }
-        .Shipped { background: #d1d8ff; color: #2980b9; }
-        .Delivered { background: #c8e6c9; color: #2e7d32; }
-        .Cancelled { background: #f3f4f6; color: #6b7280; }
         .bottomNav { position:fixed; bottom:0; width:100%; height:70px; background: white; display:flex; justify-content:space-around; align-items:center; box-shadow:0 -3px 15px rgba(0,0,0,0.1); z-index: 1000; }
         .nav-item { background: none; border: none; font-size: 10px; color: #666; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
         .nav-active { color: var(--primary); font-weight: bold; }
@@ -56,7 +51,12 @@
         .user-pic-container { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin: 0 auto 10px; border: 3px solid var(--primary); }
         .payment-card { background: #fff8f5; border: 1px solid #ffccbc; padding: 15px; border-radius: 8px; margin: 10px 0; }
         .admin-select-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .admin-select-header select { width: 60%; margin: 0; }
+
+        /* Login Security Features */
+        .pass-container { position: relative; width: 92%; margin: 10px auto; }
+        .pass-container input { width: 100%; margin: 0; padding-right: 40px; }
+        .toggle-pass { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px; user-select: none; background: transparent; }
+        .forgot-link { display: block; margin-top: 15px; color: var(--primary); font-size: 12px; text-decoration: none; cursor: pointer; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -90,9 +90,25 @@
     <div style="text-align: center; padding-top: 50px;">
         <h2 style="color:var(--primary)">Login / Signup</h2>
         <input type="email" id="loginEmail" placeholder="Email">
-        <input type="password" id="loginPass" placeholder="Password">
-        <button class="btn-main" onclick="handleLogin()">Login</button>
-        <button class="btn-main" style="background:#444; margin-top:10px" onclick="handleSignup()">Create Account</button>
+        <div class="pass-container">
+            <input type="password" id="loginPass" placeholder="Password">
+            <span class="toggle-pass" onclick="togglePass('loginPass')">👁️</span>
+        </div>
+        <button class="btn-main" onclick="handleLogin()" style="width: 92%;">Login</button>
+        <button class="btn-main" style="background:#444; margin-top:10px; width: 92%;" onclick="handleSignup()">Create Account</button>
+        <a class="forgot-link" onclick="handleForgetPassword()">Forgot Password?</a>
+    </div>
+</div>
+
+<div id="resetPage" class="section">
+    <div style="text-align: center; padding-top: 50px;">
+        <h2 style="color:var(--primary)">Set New Password</h2>
+        <p style="font-size: 12px; color: #666;">Enter your new password below</p>
+        <div class="pass-container">
+            <input type="password" id="newPass" placeholder="New Password">
+            <span class="toggle-pass" onclick="togglePass('newPass')">👁️</span>
+        </div>
+        <button class="btn-main" onclick="updatePassword()" style="width: 92%;">Update Password</button>
     </div>
 </div>
 
@@ -151,21 +167,31 @@
     <div id="cartSection" class="section">
         <h3>Checkout</h3>
         <div id="cartItems" style="background:#fff; padding:10px; border-radius:8px; margin-bottom:10px;"></div>
-        <div class="payment-card">
-            <p style="margin-top:0; font-weight:bold; color:var(--primary)">Payment Method:</p>
-            <p style="margin:2px 0; font-size:14px;"><b>JazzCash:</b> 03299469804</p>
-            <p style="margin:2px 0; font-size:14px;"><b>Account Name:</b> SAJAWAL NAZEER</p>
-            <small style="color:#666">Please upload proof below to confirm order.</small>
+        
+        <label style="font-size:12px; font-weight:bold;">Payment Method</label>
+        <select id="payMethodSelect" onchange="togglePaymentUI()">
+            <option value="jazzcash">JazzCash (Online)</option>
+            <option value="cod" id="codOption">Cash on Delivery (Only Layyah)</option>
+        </select>
+        <div id="codNotice" style="color:red; font-size:10px; margin-top:-5px; display:none;">COD only available in Layyah city.</div>
+
+        <div id="jazzcashDetails" class="payment-card">
+            <p style="margin-top:0; font-weight:bold; color:var(--primary)">JazzCash Payment:</p>
+            <p style="margin:2px 0; font-size:14px;"><b>Number:</b> 03299469804</p>
+            <p style="margin:2px 0; font-size:14px;"><b>Name:</b> SAJAWAL NAZEER</p>
         </div>
+
         <input type="text" id="orderName" placeholder="Full Name">
         <input type="number" id="orderPhone" placeholder="WhatsApp Number">
-        <textarea id="orderAddress" placeholder="Full Address" rows="2"></textarea>
-        <div style="background:white; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:10px;">
+        <textarea id="orderAddress" placeholder="Full Address (Mention City)" rows="2" onkeyup="checkLayyahCity()"></textarea>
+
+        <div id="paymentProofUI" style="background:white; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:10px;">
             <label style="font-size:12px; font-weight:bold;">Transaction ID</label>
             <input type="text" id="orderTrxId" placeholder="Enter Trx ID" style="margin:5px 0;">
             <label style="font-size:12px; font-weight:bold;">Payment Screenshot</label>
             <input type="file" id="orderTrxImg" accept="image/*" style="font-size:11px;">
         </div>
+        
         <button class="btn-main" style="background:var(--green-tick); margin-top:10px;" onclick="placeOrder()">Confirm Order (Rs <span id="cartTotal">0</span>)</button>
     </div>
 
@@ -209,6 +235,31 @@ const ADMIN_EMAIL = "ligerplaz@gmail.com";
 let currentUser = null, isAdmin = false, allProducts = [], adminBase64 = "", currentDetailProduct = null, userSavedAddress = "";
 let confirmCallback = null;
 
+function togglePass(id) {
+    const p = document.getElementById(id);
+    p.type = p.type === 'password' ? 'text' : 'password';
+}
+
+async function handleForgetPassword() {
+    const email = loginEmail.value.trim();
+    if(!email) return showToast("Enter your email first!");
+    loaderOverlay.style.display = 'flex';
+    const { error } = await _supabase.auth.resetPasswordForEmail(email);
+    loaderOverlay.style.display = 'none';
+    if(error) showToast(error.message);
+    else showToast("Password reset link sent to email!");
+}
+
+async function updatePassword() {
+    const pass = newPass.value.trim();
+    if(pass.length < 6) return showToast("Min 6 characters required");
+    loaderOverlay.style.display = 'flex';
+    const { error } = await _supabase.auth.updateUser({ password: pass });
+    loaderOverlay.style.display = 'none';
+    if(error) showToast(error.message);
+    else { showToast("Password Updated! Logged in."); location.reload(); }
+}
+
 function openConfirm(msg, callback) {
     document.getElementById('confirmMsg').innerText = msg;
     document.getElementById('customConfirm').style.display = 'block';
@@ -220,31 +271,53 @@ document.getElementById('confirmOk').onclick = () => {
 };
 document.getElementById('confirmCancel').onclick = () => { document.getElementById('customConfirm').style.display = 'none'; };
 
-// --- VISITOR TRACKING ---
+function checkLayyahCity() {
+    const addr = document.getElementById('orderAddress').value.toLowerCase();
+    const codOpt = document.getElementById('codOption');
+    const notice = document.getElementById('codNotice');
+    if(addr.includes("layyah")) {
+        codOpt.disabled = false;
+        notice.style.display = 'none';
+    } else {
+        codOpt.disabled = true;
+        notice.style.display = 'block';
+        if(document.getElementById('payMethodSelect').value === 'cod') {
+            document.getElementById('payMethodSelect').value = 'jazzcash';
+            togglePaymentUI();
+        }
+    }
+}
+
+function togglePaymentUI() {
+    const method = document.getElementById('payMethodSelect').value;
+    const proofUI = document.getElementById('paymentProofUI');
+    const jcDetails = document.getElementById('jazzcashDetails');
+    if(method === 'cod') {
+        proofUI.style.display = 'none';
+        jcDetails.style.display = 'none';
+    } else {
+        proofUI.style.display = 'block';
+        jcDetails.style.display = 'block';
+    }
+}
+
 async function logVisitor() {
     if(currentUser && currentUser.email === ADMIN_EMAIL) return;
     try {
         let loc = "Unknown Location";
-        try {
-            const res = await fetch('https://ipapi.co/json/');
-            const data = await res.json();
-            if(data.city) loc = `${data.city}, ${data.country_name}`;
-        } catch(apiErr) { console.log("Location API Error"); }
+        try { const res = await fetch('https://ipapi.co/json/'); const data = await res.json(); if(data.city) loc = `${data.city}, ${data.country_name}`; } catch(e){}
         await _supabase.from('visitors').insert([{ email: currentUser?.email || "Guest", location: loc }]);
-        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        await _supabase.from('visitors').delete().lt('created_at', twentyFourHoursAgo);
-    } catch(e) { console.log("Visitor update failed."); }
+        const old = new Date(Date.now() - 86400000).toISOString();
+        await _supabase.from('visitors').delete().lt('created_at', old);
+    } catch(e) {}
 }
 
 async function fetchVisitors() {
     if(!isAdmin) return;
-    const { data, count } = await _supabase.from('visitors').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+    const { data, count } = await _supabase.from('visitors').select('*', { count: 'exact' });
     if(data) {
         document.getElementById('visitorCount').innerText = count || 0;
-        document.getElementById('visitorDetails').innerHTML = data.map(v => {
-            const time = new Date(v.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            return `• [${time}] ${v.location} (${v.email})`;
-        }).join('<br>');
+        document.getElementById('visitorDetails').innerHTML = data.map(v => `• ${v.location} (${v.email})`).join('<br>');
     }
 }
 
@@ -265,6 +338,11 @@ async function handleSignup() {
 }
 
 window.onload = () => {
+    if(window.location.hash.includes('type=recovery')) {
+        document.getElementById('authPage').style.display = 'none';
+        document.getElementById('resetPage').style.display = 'block';
+        return;
+    }
     const saved = localStorage.getItem('helloShopUser');
     if(saved) { currentUser = JSON.parse(saved); setupApp(currentUser.email); logVisitor(); } else { logVisitor(); }
 };
@@ -280,7 +358,6 @@ function setupApp(email) {
         document.getElementById('adminNavBtn').style.display = 'flex';
         document.getElementById('cartNavBtn').style.display = 'none'; 
         document.getElementById('adminPaymentProofs').style.display = 'block';
-        document.getElementById('userAddressBook').style.display = 'none';
         document.getElementById('adminOrderHeader').style.display = 'flex';
         document.getElementById('userOrderTitle').style.display = 'none';
         fetchProofs(); fetchVisitors();
@@ -296,6 +373,7 @@ async function loadProfileData() {
             userSavedAddress = data.address;
             document.getElementById('profileAddressInput').value = data.address;
             document.getElementById('orderAddress').value = data.address;
+            checkLayyahCity();
         }
     }
 }
@@ -308,6 +386,7 @@ async function saveUserAddress() {
     document.getElementById('orderAddress').value = addr;
     loaderOverlay.style.display = 'none';
     showToast("Address Saved!");
+    checkLayyahCity();
 }
 
 async function uploadProfilePic(input) {
@@ -353,25 +432,13 @@ async function openDetail(id) {
     loaderOverlay.style.display = 'flex';
     const { data } = await _supabase.from('product_details').select('*').eq('product_id', id).maybeSingle();
     loaderOverlay.style.display = 'none';
-    
     document.getElementById('detailTitle').innerText = p.name;
     document.getElementById('detailOldPrice').innerText = "Rs " + p.price;
-    
-    // --- STOCK LOGIC ---
     const stock = p.stock || 0;
     const stockLabel = document.getElementById('stockInfo');
     const actionArea = document.getElementById('detailActionBtn');
-    
-    if(stock > 0) {
-        stockLabel.innerText = `${stock} items in stock`;
-        stockLabel.className = 'stock-badge';
-        actionArea.style.display = 'block';
-    } else {
-        stockLabel.innerText = `Out of Stock`;
-        stockLabel.className = 'stock-badge out-of-stock';
-        actionArea.style.display = 'none';
-    }
-
+    if(stock > 0) { stockLabel.innerText = `${stock} items in stock`; stockLabel.className = 'stock-badge'; actionArea.style.display = 'block'; }
+    else { stockLabel.innerText = `Out of Stock`; stockLabel.className = 'stock-badge out-of-stock'; actionArea.style.display = 'none'; }
     if(data) {
         document.getElementById('detailDescription').innerText = data.description;
         document.getElementById('detailNewPrice').innerText = "Rs " + data.discount_price;
@@ -387,68 +454,27 @@ async function openDetail(id) {
 async function fetchOrders() {
     const { data } = await _supabase.from('orders').select('*').order('id', {ascending: false});
     const list = isAdmin ? (data || []) : (data ? data.filter(o => o.user_email === currentUser.email) : []);
-    if(isAdmin) {
-        adminOrderSelect.innerHTML = '<option value="">Select Order</option>' + list.map(o => `<option value="${o.order_id}">${o.order_id} - ${o.customer_name}</option>`).join('');
-    }
+    if(isAdmin) { adminOrderSelect.innerHTML = '<option value="">Select Order</option>' + list.map(o => `<option value="${o.order_id}">${o.order_id} - ${o.customer_name}</option>`).join(''); }
     userOrdersList.innerHTML = list.map(o => `
         <div style="background:white; padding:15px; border-radius:10px; margin-bottom:10px; border-left:5px solid var(--primary)">
             <span class="status-badge ${o.status}">${o.status}</span>
             <b>ID: ${o.order_id}</b><br>
-            <small>Total: Rs ${o.total_price}</small>
-            ${isAdmin ? `<div style="font-size:11px; margin-top:5px; padding:5px; background:#f9f9f9">
-                👤 <b>Customer:</b> ${o.customer_name}<br>
-                📞 <b>WhatsApp:</b> ${o.customer_phone}<br>
-                📍 <b>Address:</b> ${o.address}
-            </div>
+            <small>Total: Rs ${o.total_price} | Payment: ${o.trx_id ? 'JazzCash' : 'COD'}</small>
+            ${isAdmin ? `<div>👤 ${o.customer_name} | 📞 ${o.customer_phone}<br>📍 ${o.address}</div>
             <select style="margin-top:10px" onchange="updateStatus('${o.order_id}', this.value)">
                 <option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option>
-                <option value="Packed" ${o.status==='Packed'?'selected':''}>Packed</option>
-                <option value="Shipped" ${o.status==='Shipped'?'selected':''}>Shipped</option>
                 <option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option>
-                <option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option>
-            </select>` : `
-            <div style="margin-top:10px; display:flex; gap:5px;">
-                ${o.status === 'Pending' ? `<button class="btn-small" style="background:var(--blue); color:white" onclick="updateStatus('${o.order_id}', 'Cancelled')">Cancel Order</button>` : ''}
-                ${(o.status === 'Delivered' || o.status === 'Cancelled') ? `<button class="btn-small btn-delete" onclick="deleteOrder('${o.order_id}')">Delete Record</button>` : ''}
-            </div>
-            `}
+            </select>` : ''}
         </div>`).join('');
 }
 
 async function fetchProofs() {
-    const { data } = await _supabase.from('orders').select('*').not('trx_id', 'is', null).order('id', {ascending: false});
-    if(!data) return;
-    adminProofSelect.innerHTML = '<option value="">Select Proof</option>' + data.map(p => `<option value="${p.order_id}">${p.order_id} (Trx: ${p.trx_id})</option>`).join('');
-    proofsList.innerHTML = data.map(p => `
-        <div style="border-bottom:1px solid #eee; padding:10px 0;">
-            <b>Order: ${p.order_id}</b><br>
-            Trx ID: ${p.trx_id}<br>
-            <img src="${p.trx_img}" style="width:100px; margin:5px 0; border:1px solid #ddd; cursor:pointer" onclick="window.open(this.src)"><br>
-            <button class="btn-small btn-order" onclick="window.open('https://wa.me/${p.customer_phone}')">Confirm on WhatsApp</button>
-        </div>
-    `).join('');
+    const { data } = await _supabase.from('orders').select('*').not('trx_id', 'is', null);
+    if(data) { adminProofSelect.innerHTML = '<option value="">Select Proof</option>' + data.map(p => `<option value="${p.order_id}">${p.order_id}</option>`).join(''); }
 }
 
 function toggleOrderDelBtn() { adminDelOrderBtn.style.display = adminOrderSelect.value ? 'block' : 'none'; }
 function toggleProofDelBtn() { adminDelProofBtn.style.display = adminProofSelect.value ? 'block' : 'none'; }
-
-function deleteSelectedOrder() {
-    const id = adminOrderSelect.value;
-    openConfirm(`Delete Order ${id} permanently?`, async () => {
-        loaderOverlay.style.display = 'flex';
-        await _supabase.from('orders').delete().eq('order_id', id);
-        loaderOverlay.style.display = 'none'; showToast("Order Deleted!"); fetchOrders(); adminDelOrderBtn.style.display = 'none';
-    });
-}
-
-function deleteSelectedProof() {
-    const id = adminProofSelect.value;
-    openConfirm(`Remove Payment Proof for Order ${id}?`, async () => {
-        loaderOverlay.style.display = 'flex';
-        await _supabase.from('orders').update({ trx_id: null, trx_img: null }).eq('order_id', id);
-        loaderOverlay.style.display = 'none'; showToast("Proof Removed!"); fetchProofs(); adminDelProofBtn.style.display = 'none';
-    });
-}
 
 async function uploadDetails() {
     let imgs = []; loaderOverlay.style.display = 'flex';
@@ -460,25 +486,19 @@ async function uploadDetails() {
 function toBase64(file) { return new Promise((resolve) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); }); }
 function previewImg(input, id) { const r = new FileReader(); r.onload = e => { adminBase64 = e.target.result; document.getElementById(id).src = e.target.result; document.getElementById(id).style.display = 'block'; }; r.readAsDataURL(input.files[0]); }
 
-// --- ADD NEW PRODUCT WITH STOCK ---
 async function addNewProduct() { 
     if(!pName.value || !pPrice.value || !pStock.value || !adminBase64) return showToast("Enter all details");
     loaderOverlay.style.display = 'flex';
     await _supabase.from('products').insert([{ name: pName.value, price: pPrice.value, stock: parseInt(pStock.value), img: adminBase64 }]); 
-    loaderOverlay.style.display = 'none';
-    pName.value = ""; pPrice.value = ""; pStock.value = "";
-    loadProducts(); 
+    loaderOverlay.style.display = 'none'; loadProducts(); 
 }
 
 async function deleteProduct(id) { openConfirm("Delete product?", async () => { await _supabase.from('products').delete().eq('id', id); loadProducts(); }); }
-async function deleteOrder(id) { openConfirm("Delete record permanently?", async () => { await _supabase.from('orders').delete().eq('order_id', id); fetchOrders(); }); }
 
 async function updateStatus(id, s) { 
     loaderOverlay.style.display = 'flex';
     await _supabase.from('orders').update({ status: s }).eq('order_id', id); 
-    loaderOverlay.style.display = 'none';
-    showToast("Status Updated!");
-    fetchOrders(); 
+    loaderOverlay.style.display = 'none'; showToast("Status Updated!"); fetchOrders(); 
 }
 
 function switchSection(id, btn) { 
@@ -491,49 +511,27 @@ function buyNowFromDetail() {
     cartItems.innerHTML = `<b>${currentDetailProduct.name}</b>`; 
     cartTotal.innerText = document.getElementById('detailNewPrice').innerText.replace('Rs ', ''); 
     document.getElementById('orderAddress').value = userSavedAddress;
+    checkLayyahCity();
     switchSection('cartSection'); 
 }
 
-// --- PLACE ORDER & DEDUCT STOCK ---
 async function placeOrder() {
+    const method = document.getElementById('payMethodSelect').value;
     const trxId = document.getElementById('orderTrxId').value;
     const trxImgFile = document.getElementById('orderTrxImg').files[0];
-    if(!orderName.value || !orderPhone.value || !orderAddress.value || !trxId || !trxImgFile) { return showToast("Fill all details & Upload Proof!"); }
-    
+    if(!orderName.value || !orderPhone.value || !orderAddress.value) return showToast("Enter Name, Phone and Address!");
+    if(method === 'jazzcash' && (!trxId || !trxImgFile)) return showToast("Upload JazzCash Proof!");
     loaderOverlay.style.display = 'flex';
     try {
-        // 1. Check stock again before placing order
         const { data: prod } = await _supabase.from('products').select('stock').eq('id', currentDetailProduct.id).single();
-        if(prod.stock <= 0) {
-            loaderOverlay.style.display = 'none';
-            return showToast("Sorry, item just went out of stock!");
-        }
-
-        const trxBase64 = await toBase64(trxImgFile);
-        
-        // 2. Insert Order
-        const { error: orderError } = await _supabase.from('orders').insert([{ 
-            order_id: 'ORD'+Math.floor(1000 + Math.random()*9000), 
-            user_email: currentUser.email, 
-            customer_name: orderName.value, 
-            customer_phone: orderPhone.value, 
-            total_price: cartTotal.innerText, 
-            status: 'Pending', 
-            address: orderAddress.value, 
-            trx_id: trxId, 
-            trx_img: trxBase64,
-            product_id: currentDetailProduct.id
+        if(prod.stock <= 0) { loaderOverlay.style.display = 'none'; return showToast("Out of stock!"); }
+        let trxBase64 = null;
+        if(method === 'jazzcash') trxBase64 = await toBase64(trxImgFile);
+        await _supabase.from('orders').insert([{ 
+            order_id: 'ORD'+Math.floor(1000 + Math.random()*9000), user_email: currentUser.email, customer_name: orderName.value, customer_phone: orderPhone.value, total_price: cartTotal.innerText, status: 'Pending', address: orderAddress.value, trx_id: (method==='cod' ? null : trxId), trx_img: trxBase64, product_id: currentDetailProduct.id
         }]);
-        
-        if(orderError) throw orderError;
-
-        // 3. Deduct Stock (1 unit)
         await _supabase.from('products').update({ stock: prod.stock - 1 }).eq('id', currentDetailProduct.id);
-
-        showToast("Order Placed Successfully!"); 
-        loadProducts(); // Refresh stock locally
-        switchSection('ordersSection'); 
-        fetchOrders();
+        showToast("Order Placed!"); loadProducts(); switchSection('ordersSection'); fetchOrders();
     } catch (e) { showToast("Error: " + e.message); } finally { loaderOverlay.style.display = 'none'; }
 }
 
