@@ -48,6 +48,10 @@
         .msg { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 13px; }
         .msg-me { align-self: flex-end; background: var(--primary); color: white; }
         .msg-them { align-self: flex-start; background: #eee; color: #333; }
+        .msg-header { display: flex; align-items: center; margin-bottom: 5px; font-size: 12px; font-weight: bold; }
+        .msg-header img { width: 25px; height: 25px; border-radius: 50%; margin-right: 5px; }
+        .msg-me .msg-header { flex-direction: row-reverse; text-align: right; }
+        .msg-them .msg-header { text-align: left; }
         .user-pic-container { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin: 0 auto 10px; border: 3px solid var(--primary); }
         .payment-card { background: #fff8f5; border: 1px solid #ffccbc; padding: 15px; border-radius: 8px; margin: 10px 0; }
         .admin-select-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -137,10 +141,6 @@
     <div id="adminPanelSection" class="section">
         <div style="background: white; padding: 15px; border-radius: 12px; border:1px solid #ddd;">
             <h3 style="margin-top:0; color:var(--primary)">Admin Panel</h3>
-            <div id="visitorStats" style="background:#f9f9f9; padding:10px; border-radius:8px; margin-bottom:15px; font-size:13px; border:1px solid #eee;">
-                <b>Total Visitors Today:</b> <span id="visitorCount">0</span>
-                <div id="visitorDetails" style="max-height:80px; overflow-y:auto; margin-top:5px; color:#666; font-size:11px;"></div>
-            </div>
             <input type="text" id="pName" placeholder="Product Name">
             <textarea id="pDesc" placeholder="Description" rows="4"></textarea>
             <input type="number" id="pBasePrice" placeholder="Base Price">
@@ -225,12 +225,47 @@
         </div>
     </div>
 
+    <div id="buyNowSection" class="section" style="background: #f4f7f6;">
+        <h3>Buy Now</h3>
+        <div id="buyNowItem" style="background:#fff; padding:10px; border-radius:8px; margin-bottom:10px;"></div>
+        <label style="font-size:12px; font-weight:bold;">Payment Method</label>
+        <select id="buyNowPayMethodSelect" onchange="toggleBuyNowPaymentUI()">
+            <option value="jazzcash">JazzCash (Online)</option>
+            <option value="cod" id="buyNowCodOption" disabled>Cash on Delivery (Only Layyah)</option>
+        </select>
+        <div id="buyNowCodNotice" style="color:red; font-size:10px; margin-top:-5px; display:none;">COD only available in Layyah city.</div>
+
+        <div id="buyNowJazzcashDetails" class="payment-card">
+            <p style="margin-top:0; font-weight:bold; color:var(--primary)">JazzCash Payment:</p>
+            <p style="margin:2px 0; font-size:14px;"><b>Number:</b> 03299469804</p>
+            <p style="margin:2px 0; font-size:14px;"><b>Name:</b> SAJAWAL NAZEER</p>
+        </div>
+
+        <input type="text" id="buyNowOrderName" placeholder="Full Name">
+        <input type="number" id="buyNowOrderPhone" placeholder="WhatsApp Number">
+        <textarea id="buyNowOrderAddress" placeholder="Full Address (Mention City)" rows="2" onkeyup="checkBuyNowLayyahCity()"></textarea>
+
+        <div id="buyNowPaymentProofUI" style="background:white; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:10px;">
+            <label style="font-size:12px; font-weight:bold;">Transaction ID</label>
+            <input type="text" id="buyNowOrderTrxId" placeholder="Enter Trx ID" style="margin:5px 0;">
+            <label style="font-size:12px; font-weight:bold;">Payment Screenshot</label>
+            <input type="file" id="buyNowOrderTrxImg" accept="image/*" style="font-size:11px;">
+        </div>
+        
+        <button class="btn-main" style="background:var(--green-tick); margin-top:10px;" onclick="placeBuyNowOrder()">Confirm Order (Rs <span id="buyNowTotal">0</span>)</button>
+    </div>
+
     <div id="profileSection" class="section">
         <div style="text-align:center">
             <div class="user-pic-container"><img id="userProfilePic" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:100%; height:100%; object-fit:cover;"></div>
             <input type="file" id="userPicInput" style="display:none" onchange="uploadProfilePic(this)">
             <button class="btn-main" style="width:60%; font-size:12px; padding:8px; margin-bottom:10px" onclick="document.getElementById('userPicInput').click()">Upload Photo</button>
-            <div id="userAddressBook" style="margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd;">
+            <div id="userNameBook" style="margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd; display:none;">
+                <label style="font-weight:bold; font-size:14px;">My Full Name</label>
+                <input type="text" id="profileNameInput" placeholder="Enter your full name...">
+                <button class="btn-main" style="font-size:12px; padding:8px;" onclick="saveUserName()">Save Name</button>
+            </div>
+            <div id="userAddressBook" style="margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd; display:none;">
                 <label style="font-weight:bold; font-size:14px;">My Address Book</label>
                 <textarea id="profileAddressInput" placeholder="Enter your delivery address..." rows="3"></textarea>
                 <button class="btn-main" style="font-size:12px; padding:8px;" onclick="saveUserAddress()">Save Address</button>
@@ -262,8 +297,8 @@ const SUPABASE_URL = "https://urrqpsmhlzldtxzstnuu.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OmqQDQdf7ye8KXbviwFYng_zPdbZpWb";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ADMIN_EMAIL = "ligerplaz@gmail.com";
-let currentUser = null, isAdmin = false, allProducts = [], currentDetailProduct = null, userSavedAddress = "", editingProduct = null;
-let confirmCallback = null;
+let currentUser = null, isAdmin = false, allProducts = [], currentDetailProduct = null, userSavedAddress = "", userSavedName = "", editingProduct = null;
+let confirmCallback = null, userProfiles = {};
 
 function togglePass(id) {
     const p = document.getElementById(id);
@@ -318,10 +353,40 @@ function checkLayyahCity() {
     }
 }
 
+function checkBuyNowLayyahCity() {
+    const addr = document.getElementById('buyNowOrderAddress').value.toLowerCase();
+    const codOpt = document.getElementById('buyNowCodOption');
+    const notice = document.getElementById('buyNowCodNotice');
+    if(addr.includes("layyah")) {
+        codOpt.disabled = false;
+        notice.style.display = 'none';
+    } else {
+        codOpt.disabled = true;
+        notice.style.display = 'block';
+        if(document.getElementById('buyNowPayMethodSelect').value === 'cod') {
+            document.getElementById('buyNowPayMethodSelect').value = 'jazzcash';
+            toggleBuyNowPaymentUI();
+        }
+    }
+}
+
 function togglePaymentUI() {
     const method = document.getElementById('payMethodSelect').value;
     const proofUI = document.getElementById('paymentProofUI');
     const jcDetails = document.getElementById('jazzcashDetails');
+    if(method === 'cod') {
+        proofUI.style.display = 'none';
+        jcDetails.style.display = 'none';
+    } else {
+        proofUI.style.display = 'block';
+        jcDetails.style.display = 'block';
+    }
+}
+
+function toggleBuyNowPaymentUI() {
+    const method = document.getElementById('buyNowPayMethodSelect').value;
+    const proofUI = document.getElementById('buyNowPaymentProofUI');
+    const jcDetails = document.getElementById('buyNowJazzcashDetails');
     if(method === 'cod') {
         proofUI.style.display = 'none';
         jcDetails.style.display = 'none';
@@ -383,14 +448,18 @@ function setupApp(email) {
     document.getElementById('mainApp').style.display = 'block';
     document.getElementById('bottomNav').style.display = 'flex';
     document.getElementById('chatBtn').style.display = 'flex';
-    document.getElementById('displayEmail').innerText = email;
     if(isAdmin) {
+        document.getElementById('displayEmail').innerHTML = '<span style="color: var(--primary);">ADMIN</span>';
         document.getElementById('adminNavBtn').style.display = 'flex';
         document.getElementById('cartNavBtn').style.display = 'none'; 
         document.getElementById('adminPaymentProofs').style.display = 'block';
         document.getElementById('adminOrderHeader').style.display = 'flex';
         document.getElementById('userOrderTitle').style.display = 'none';
-        fetchProofs(); fetchVisitors();
+        fetchProofs(); // Removed fetchVisitors
+    } else {
+        document.getElementById('displayEmail').innerText = email;
+        document.getElementById('userNameBook').style.display = 'block';
+        document.getElementById('userAddressBook').style.display = 'block';
     }
     loadProducts(); fetchOrders(); listenChat(); loadProfileData(); renderCart();
 }
@@ -399,13 +468,32 @@ async function loadProfileData() {
     const { data } = await _supabase.from('profiles').select('*').eq('email', currentUser.email).maybeSingle();
     if(data) {
         if(data.profile_pic) document.getElementById('userProfilePic').src = data.profile_pic;
+        if(data.full_name) {
+            userSavedName = data.full_name;
+            document.getElementById('profileNameInput').value = data.full_name;
+            document.getElementById('orderName').value = data.full_name;
+            document.getElementById('buyNowOrderName').value = data.full_name;
+        }
         if(data.address) {
             userSavedAddress = data.address;
             document.getElementById('profileAddressInput').value = data.address;
             document.getElementById('orderAddress').value = data.address;
+            document.getElementById('buyNowOrderAddress').value = data.address;
             checkLayyahCity();
+            checkBuyNowLayyahCity();
         }
     }
+}
+
+async function saveUserName() {
+    const name = document.getElementById('profileNameInput').value;
+    loaderOverlay.style.display = 'flex';
+    await _supabase.from('profiles').upsert([{ email: currentUser.email, full_name: name }], { onConflict: 'email' });
+    userSavedName = name;
+    document.getElementById('orderName').value = name;
+    document.getElementById('buyNowOrderName').value = name;
+    loaderOverlay.style.display = 'none';
+    showToast("Name Saved!");
 }
 
 async function saveUserAddress() {
@@ -414,9 +502,11 @@ async function saveUserAddress() {
     await _supabase.from('profiles').upsert([{ email: currentUser.email, address: addr }], { onConflict: 'email' });
     userSavedAddress = addr;
     document.getElementById('orderAddress').value = addr;
+    document.getElementById('buyNowOrderAddress').value = addr;
     loaderOverlay.style.display = 'none';
     showToast("Address Saved!");
     checkLayyahCity();
+    checkBuyNowLayyahCity();
 }
 
 async function uploadProfilePic(input) {
@@ -489,6 +579,113 @@ async function openDetail(id) {
         ` : '';
     }
     switchSection('productDetailPage');
+}
+
+async function buyNowFromDetail() {
+    if (currentDetailProduct.stock <= 0) return showToast("Out of stock!");
+    const item = {
+        id: currentDetailProduct.id,
+        name: currentDetailProduct.name,
+        price: currentDetailProduct.disc_price || currentDetailProduct.price,
+        img: currentDetailProduct.img
+    };
+    document.getElementById('buyNowItem').innerHTML = `
+        <div class="cart-item">
+            <img src="${item.img}">
+            <div>
+                <b>${item.name}</b><br>
+                Rs ${item.price}
+            </div>
+        </div>
+    `;
+    document.getElementById('buyNowTotal').innerText = item.price;
+    document.getElementById('buyNowOrderName').value = userSavedName;
+    document.getElementById('buyNowOrderAddress').value = userSavedAddress;
+    checkBuyNowLayyahCity();
+    toggleBuyNowPaymentUI();
+    switchSection('buyNowSection');
+}
+
+async function placeBuyNowOrder() {
+    const method = document.getElementById('buyNowPayMethodSelect').value;
+    const trxId = document.getElementById('buyNowOrderTrxId').value.trim();
+    const trxImgFile = document.getElementById('buyNowOrderTrxImg').files[0];
+    const name = document.getElementById('buyNowOrderName').value.trim();
+    const phone = document.getElementById('buyNowOrderPhone').value.trim();
+    const addr = document.getElementById('buyNowOrderAddress').value.trim();
+
+    if (!name || !phone || !addr) {
+        return showToast("Name, Phone and Address are required!");
+    }
+
+    if (method === 'jazzcash' && (!trxId || !trxImgFile)) {
+        return showToast("Please enter Trx ID and upload payment screenshot for JazzCash!");
+    }
+
+    loaderOverlay.style.display = 'flex';
+
+    try {
+        const items = [{
+            id: currentDetailProduct.id,
+            name: currentDetailProduct.name,
+            price: currentDetailProduct.disc_price || currentDetailProduct.price,
+            img: currentDetailProduct.img
+        }];
+        // Check & decrease stock safely
+        for (let item of items) {
+            const { data: prod, error: stockErr } = await _supabase
+                .from('products')
+                .select('stock')
+                .eq('id', item.id)
+                .single();
+
+            if (stockErr || !prod) throw new Error("Product not found");
+            if (prod.stock <= 0) throw new Error(`${item.name} is out of stock!`);
+
+            const newStock = prod.stock - 1;
+
+            const { error: updateErr } = await _supabase
+                .from('products')
+                .update({ stock: newStock })
+                .eq('id', item.id);
+
+            if (updateErr) throw updateErr;
+        }
+
+        let trxBase64 = null;
+        if (method === 'jazzcash' && trxImgFile) {
+            trxBase64 = await toBase64(trxImgFile);
+        }
+
+        const orderId = 'ORD' + Math.floor(100000 + Math.random() * 900000);
+        const total = items.reduce((sum, i) => sum + i.price, 0);
+
+        const { error: orderErr } = await _supabase.from('orders').insert([{ 
+            order_id: orderId,
+            user_email: currentUser.email,
+            customer_name: name,
+            customer_phone: phone,
+            address: addr,
+            total_price: total,
+            status: 'Pending',
+            trx_id: method === 'cod' ? null : trxId,
+            trx_img: trxBase64,
+            items: items
+        }]);
+
+        if (orderErr) throw orderErr;
+
+        showToast("Order Placed Successfully! ✓");
+        switchSection('ordersSection');
+        fetchOrders();
+        if (isAdmin) fetchProofs();
+
+    } catch (e) {
+        console.error(e);
+        showToast("Order failed: " + (e.message || "Unknown error"));
+    } finally {
+        loaderOverlay.style.display = 'none';
+    }
 }
 
 async function editProduct(id) {
@@ -631,10 +828,6 @@ function switchSection(id, btn) {
     if(id === 'cartSection') renderCart();
 }
 
-function buyNowFromDetail() { 
-    addToCart(true);
-}
-
 function addToCart(buyNow = false) {
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
     if(cart.find(c => c.id === currentDetailProduct.id)) return showToast("Already in cart!");
@@ -698,6 +891,7 @@ function showCheckoutForm() {
     const selected = cart.filter(c => checked.includes(c.id.toString()));
     const total = selected.reduce((sum, s) => sum + s.price, 0);
     document.getElementById('cartTotal').innerText = total;
+    document.getElementById('orderName').value = userSavedName;
     document.getElementById('orderAddress').value = userSavedAddress;
     checkLayyahCity();
     document.getElementById('checkoutForm').style.display = 'block';
@@ -708,9 +902,9 @@ async function placeOrder() {
     const method = document.getElementById('payMethodSelect').value;
     const trxId = document.getElementById('orderTrxId').value.trim();
     const trxImgFile = document.getElementById('orderTrxImg').files[0];
-    const name = orderName.value.trim();
-    const phone = orderPhone.value.trim();
-    const addr = orderAddress.value.trim();
+    const name = document.getElementById('orderName').value.trim();
+    const phone = document.getElementById('orderPhone').value.trim();
+    const addr = document.getElementById('orderAddress').value.trim();
 
     if (!name || !phone || !addr) {
         return showToast("Name, Phone and Address are required!");
@@ -788,13 +982,40 @@ async function placeOrder() {
 function showToast(m) { customToast.innerText = m; customToast.style.display = 'block'; setTimeout(()=>customToast.style.display='none',3000); }
 function userLogout() { localStorage.removeItem('helloShopUser'); localStorage.removeItem('cart'); location.reload(); }
 function toggleChat() { chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex'; }
-async function sendMsg() { await _supabase.from('messages').insert([{ sender: currentUser.email, text: chatInput.value, receiver: isAdmin ? "CUSTOMER" : ADMIN_EMAIL }]); chatInput.value = ""; }
+async function sendMsg() { 
+    if (chatInput.value.trim() === '') return;
+    await _supabase.from('messages').insert([{ sender: isAdmin ? ADMIN_EMAIL : currentUser.email, text: chatInput.value }]); 
+    chatInput.value = ""; 
+}
 function listenChat() { _supabase.channel('any').on('postgres_changes', { event: 'INSERT', table: 'messages' }, () => renderMessages()).subscribe(); renderMessages(); }
 async function renderMessages() {
-    const { data } = await _supabase.from('messages').select('*').order('created_at', {ascending: true});
-    if(!data) return;
-    chatMessages.innerHTML = data.filter(m => m.sender === currentUser.email || m.receiver === currentUser.email || isAdmin)
-    .map(m => `<div class="msg ${m.sender === currentUser.email ? 'msg-me' : 'msg-them'}">${m.text}</div>`).join('');
+    const { data: messages } = await _supabase.from('messages').select('*').order('created_at', {ascending: true});
+    if(!messages) return;
+    // Fetch profiles for unique senders
+    const uniqueSenders = [...new Set(messages.map(m => m.sender))].filter(s => s !== ADMIN_EMAIL);
+    if (uniqueSenders.length > 0) {
+        const { data: profiles } = await _supabase.from('profiles').select('email, full_name, profile_pic').in('email', uniqueSenders);
+        userProfiles = profiles.reduce((acc, p) => {
+            acc[p.email] = { name: p.full_name || p.email, dp: p.profile_pic || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' };
+            return acc;
+        }, {});
+    }
+    const filtered = messages.filter(m => {
+        if (isAdmin) return true;
+        return m.sender === currentUser.email || m.sender === ADMIN_EMAIL;
+    });
+    chatMessages.innerHTML = filtered.map(m => {
+        const isMe = m.sender === (isAdmin ? ADMIN_EMAIL : currentUser.email);
+        const name = isMe ? (isAdmin ? 'Admin' : userSavedName || 'You') : (m.sender === ADMIN_EMAIL ? 'Admin' : userProfiles[m.sender]?.name || m.sender);
+        const dp = isMe ? (isAdmin ? 'https://cdn-icons-png.flaticon.com/512/149/149071.png' : document.getElementById('userProfilePic').src) : (m.sender === ADMIN_EMAIL ? 'https://cdn-icons-png.flaticon.com/512/149/149071.png' : userProfiles[m.sender]?.dp || 'https://cdn-icons-png.flaticon.com/512/149/149071.png');
+        return `<div class="${isMe ? 'msg-me' : 'msg-them'} msg">
+            <div class="msg-header ${isMe ? 'msg-me' : 'msg-them'}">
+                <img src="${dp}">
+                ${name}
+            </div>
+            ${m.text}
+        </div>`;
+    }).join('');
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 function searchProducts() { renderHomeProducts(allProducts.filter(p => p.name.toLowerCase().includes(searchBar.value.toLowerCase()))); }
