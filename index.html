@@ -706,36 +706,83 @@ function showCheckoutForm() {
 
 async function placeOrder() {
     const method = document.getElementById('payMethodSelect').value;
-    const trxId = document.getElementById('orderTrxId').value;
+    const trxId = document.getElementById('orderTrxId').value.trim();
     const trxImgFile = document.getElementById('orderTrxImg').files[0];
-    const name = orderName.value, phone = orderPhone.value, addr = orderAddress.value;
-    if(!name || !phone || !addr) return showToast("Enter Name, Phone and Address!");
-    if(method === 'jazzcash' && (!trxId || !trxImgFile)) return showToast("Upload JazzCash Proof!");
+    const name = orderName.value.trim();
+    const phone = orderPhone.value.trim();
+    const addr = orderAddress.value.trim();
+
+    if (!name || !phone || !addr) {
+        return showToast("Name, Phone and Address are required!");
+    }
+
+    if (method === 'jazzcash' && (!trxId || !trxImgFile)) {
+        return showToast("Please enter Trx ID and upload payment screenshot for JazzCash!");
+    }
+
     loaderOverlay.style.display = 'flex';
+
     try {
-        const items = currentDetailProduct.items;
-        for(let item of items) {
-            const { data: prod } = await _supabase.from('products').select('stock').eq('id', item.id).single();
-            if(prod.stock <= 0) throw new Error(`${item.name} out of stock!`);
+        const items = currentDetailProduct.items || [];
+        if (items.length === 0) throw new Error("No items selected");
+
+        // Check & decrease stock safely
+        for (let item of items) {
+            const { data: prod, error: stockErr } = await _supabase
+                .from('products')
+                .select('stock')
+                .eq('id', item.id)
+                .single();
+
+            if (stockErr || !prod) throw new Error("Product not found");
+            if (prod.stock <= 0) throw new Error(`${item.name} is out of stock!`);
+
+            const newStock = prod.stock - 1;
+
+            const { error: updateErr } = await _supabase
+                .from('products')
+                .update({ stock: newStock })
+                .eq('id', item.id);
+
+            if (updateErr) throw updateErr;
         }
+
         let trxBase64 = null;
-        if(method === 'jazzcash') trxBase64 = await toBase64(trxImgFile);
-        const orderId = 'ORD'+Math.floor(1000 + Math.random()*9000);
-        const total = items.reduce((sum, i) => sum + i.price, 0);
-        await _supabase.from('orders').insert([{ 
-            order_id: orderId, user_email: currentUser.email, customer_name: name, customer_phone: phone, address: addr, 
-            total_price: total, status: 'Pending', trx_id: (method==='cod' ? null : trxId), trx_img: trxBase64, items: items
-        }]);
-        for(let item of items) {
-            await _supabase.from('products').update({ stock: _supabase.raw('stock - 1') }).eq('id', item.id);
+        if (method === 'jazzcash' && trxImgFile) {
+            trxBase64 = await toBase64(trxImgFile);
         }
+
+        const orderId = 'ORD' + Math.floor(100000 + Math.random() * 900000);
+        const total = items.reduce((sum, i) => sum + i.price, 0);
+
+        const { error: orderErr } = await _supabase.from('orders').insert([{ 
+            order_id: orderId,
+            user_email: currentUser.email,
+            customer_name: name,
+            customer_phone: phone,
+            address: addr,
+            total_price: total,
+            status: 'Pending',
+            trx_id: method === 'cod' ? null : trxId,
+            trx_img: trxBase64,
+            items: items
+        }]);
+
+        if (orderErr) throw orderErr;
+
         localStorage.removeItem('cart');
-        showToast("Order Placed!");
+        showToast("Order Placed Successfully! ✓");
         renderCart();
-        switchSection('ordersSection'); 
+        switchSection('ordersSection');
         fetchOrders();
-        if(isAdmin) fetchProofs();
-    } catch (e) { showToast("Error: " + e.message); } finally { loaderOverlay.style.display = 'none'; }
+        if (isAdmin) fetchProofs();
+
+    } catch (e) {
+        console.error(e);
+        showToast("Order failed: " + (e.message || "Unknown error"));
+    } finally {
+        loaderOverlay.style.display = 'none';
+    }
 }
 
 function showToast(m) { customToast.innerText = m; customToast.style.display = 'block'; setTimeout(()=>customToast.style.display='none',3000); }
