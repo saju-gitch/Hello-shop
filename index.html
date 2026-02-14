@@ -77,6 +77,17 @@
         .cart-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border-radius: 8px; margin-bottom: 10px; border: 1px solid #eee; }
         .cart-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
         .cart-item input[type="checkbox"] { margin-right: 10px; }
+
+        /* Google Sign-in Button */
+        .google-btn { background: #4285F4; color: white; border: none; padding: 14px; width: 92%; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; position: relative; }
+        .google-btn.disabled { background: #ddd; cursor: not-allowed; }
+        .lock-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 18px; color: #888; }
+
+        /* Popup for Google */
+        #googlePopup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(51, 51, 51, 0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .popup-content { background: #f4f7f6; padding: 20px; border-radius: 12px; text-align: center; width: 80%; max-width: 300px; }
+        .popup-content h2 { color: var(--primary); margin-bottom: 10px; }
+        .popup-content button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -116,7 +127,15 @@
         </div>
         <button class="btn-main" onclick="handleLogin()" style="width: 92%;">Login</button>
         <button class="btn-main" style="background:#444; margin-top:10px; width: 92%;" onclick="handleSignup()">Create Account</button>
+        <button class="google-btn disabled" onclick="showGooglePopup()" style="width: 92%;">Continue with Google <span class="lock-icon">🔒</span></button>
         <a class="forgot-link" onclick="handleForgetPassword()">Forgot Password?</a>
+    </div>
+</div>
+
+<div id="googlePopup">
+    <div class="popup-content">
+        <h2>Not available yet</h2>
+        <button onclick="closeGooglePopup()">Back</button>
     </div>
 </div>
 
@@ -257,6 +276,7 @@
 
     <div id="profileSection" class="section">
         <div style="text-align:center">
+            <h3 id="userNameDisplay" style="color: var(--primary); margin-bottom: 10px; display: none;"></h3>
             <div class="user-pic-container"><img id="userProfilePic" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:100%; height:100%; object-fit:cover;"></div>
             <input type="file" id="userPicInput" style="display:none" onchange="uploadProfilePic(this)">
             <button class="btn-main" style="width:60%; font-size:12px; padding:8px; margin-bottom:10px" onclick="document.getElementById('userPicInput').click()">Upload Photo</button>
@@ -264,6 +284,7 @@
                 <label style="font-weight:bold; font-size:14px;">My Full Name</label>
                 <input type="text" id="profileNameInput" placeholder="Enter your full name...">
                 <button class="btn-main" style="font-size:12px; padding:8px;" onclick="saveUserName()">Save Name</button>
+                <button id="editNameBtn" class="btn-main" style="display:none; font-size:12px; padding:8px; background:var(--blue);" onclick="editUserName()">Edit Name</button>
             </div>
             <div id="userAddressBook" style="margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd; display:none;">
                 <label style="font-weight:bold; font-size:14px;">My Address Book</label>
@@ -336,6 +357,14 @@ document.getElementById('confirmOk').onclick = () => {
 };
 document.getElementById('confirmCancel').onclick = () => { document.getElementById('customConfirm').style.display = 'none'; };
 
+function showGooglePopup() {
+    document.getElementById('googlePopup').style.display = 'flex';
+}
+
+function closeGooglePopup() {
+    document.getElementById('googlePopup').style.display = 'none';
+}
+
 function checkLayyahCity() {
     const addr = document.getElementById('orderAddress').value.toLowerCase();
     const codOpt = document.getElementById('codOption');
@@ -407,15 +436,6 @@ async function logVisitor() {
     } catch(e) {}
 }
 
-async function fetchVisitors() {
-    if(!isAdmin) return;
-    const { data, count } = await _supabase.from('visitors').select('*', { count: 'exact' });
-    if(data) {
-        document.getElementById('visitorCount').innerText = count || 0;
-        document.getElementById('visitorDetails').innerHTML = data.map(v => `• ${v.location} (${v.email})`).join('<br>');
-    }
-}
-
 async function handleLogin() {
     const e = loginEmail.value.trim(), p = loginPass.value.trim();
     if(!e || !p) return showToast("Enter credentials");
@@ -470,7 +490,12 @@ async function loadProfileData() {
         if(data.profile_pic) document.getElementById('userProfilePic').src = data.profile_pic;
         if(data.full_name) {
             userSavedName = data.full_name;
+            document.getElementById('userNameDisplay').innerText = data.full_name;
+            document.getElementById('userNameDisplay').style.display = 'block';
             document.getElementById('profileNameInput').value = data.full_name;
+            document.getElementById('profileNameInput').style.display = 'none';
+            document.getElementById('saveNameBtn').style.display = 'none';
+            document.getElementById('editNameBtn').style.display = 'block';
             document.getElementById('orderName').value = data.full_name;
             document.getElementById('buyNowOrderName').value = data.full_name;
         }
@@ -487,13 +512,26 @@ async function loadProfileData() {
 
 async function saveUserName() {
     const name = document.getElementById('profileNameInput').value;
+    if (!name) return showToast("Enter your name!");
     loaderOverlay.style.display = 'flex';
     await _supabase.from('profiles').upsert([{ email: currentUser.email, full_name: name }], { onConflict: 'email' });
     userSavedName = name;
+    document.getElementById('userNameDisplay').innerText = name;
+    document.getElementById('userNameDisplay').style.display = 'block';
+    document.getElementById('profileNameInput').style.display = 'none';
+    document.getElementById('saveNameBtn').style.display = 'none';
+    document.getElementById('editNameBtn').style.display = 'block';
     document.getElementById('orderName').value = name;
     document.getElementById('buyNowOrderName').value = name;
     loaderOverlay.style.display = 'none';
     showToast("Name Saved!");
+}
+
+function editUserName() {
+    document.getElementById('userNameDisplay').style.display = 'none';
+    document.getElementById('profileNameInput').style.display = 'block';
+    document.getElementById('saveNameBtn').style.display = 'block';
+    document.getElementById('editNameBtn').style.display = 'none';
 }
 
 async function saveUserAddress() {
