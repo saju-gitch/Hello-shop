@@ -37,6 +37,8 @@
         .old-price { text-decoration: line-through; color: var(--red); font-size: 14px; margin-right: 10px; }
         .new-price { color: var(--green-tick); font-size: 20px; font-weight: bold; }
         .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; float: right; }
+        .stock-badge { display: inline-block; padding: 2px 8px; background: #e8f5e9; color: #2e7d32; border-radius: 5px; font-size: 12px; margin-bottom: 10px; font-weight: 600; }
+        .out-of-stock { background: #ffebee; color: #c62828; }
         .Pending { background: #ffeaa7; color: #d35400; }
         .Packed { background: #e0f2f1; color: #00796b; }
         .Shipped { background: #d1d8ff; color: #2980b9; }
@@ -109,6 +111,7 @@
             </div>
             <input type="text" id="pName" placeholder="Product Name">
             <input type="number" id="pPrice" placeholder="Base Price">
+            <input type="number" id="pStock" placeholder="Quantity (Stock)">
             <input type="file" id="pImgFile" accept="image/*" onchange="previewImg(this, 'adminP')">
             <img id="adminP" style="width:70px; display:none; margin:10px auto;">
             <button class="btn-main" onclick="addNewProduct()">Add Product (Home)</button>
@@ -125,11 +128,14 @@
     <div id="productDetailPage" class="section">
         <button onclick="switchSection('homeSection')" style="border:none; background:none; color:var(--primary); font-weight:bold; margin-bottom:15px;">← Back</button>
         <div id="detailSlider" class="slider"></div>
+        <div id="stockInfo" class="stock-badge"></div>
         <h2 id="detailTitle"></h2>
         <div><span id="detailOldPrice" class="old-price"></span><span id="detailNewPrice" class="new-price"></span></div>
         <p id="detailDescription"></p>
-        <button class="btn-main" onclick="buyNowFromDetail()">Buy Now</button>
-        <button class="btn-main" style="background:var(--blue); margin-top:10px" onclick="showToast('Added to Cart!')">Add to Cart</button>
+        <div id="detailActionBtn">
+            <button class="btn-main" onclick="buyNowFromDetail()">Buy Now</button>
+            <button class="btn-main" style="background:var(--blue); margin-top:10px" onclick="showToast('Added to Cart!')">Add to Cart</button>
+        </div>
     </div>
 
     <div id="ordersSection" class="section">
@@ -214,11 +220,9 @@ document.getElementById('confirmOk').onclick = () => {
 };
 document.getElementById('confirmCancel').onclick = () => { document.getElementById('customConfirm').style.display = 'none'; };
 
-// --- UPDATED VISITOR TRACKING (Excludes Admin & Auto-Deletes) ---
+// --- VISITOR TRACKING ---
 async function logVisitor() {
-    // Agar koi login hai aur wo Admin hai, to log mat karo
     if(currentUser && currentUser.email === ADMIN_EMAIL) return;
-
     try {
         let loc = "Unknown Location";
         try {
@@ -226,27 +230,15 @@ async function logVisitor() {
             const data = await res.json();
             if(data.city) loc = `${data.city}, ${data.country_name}`;
         } catch(apiErr) { console.log("Location API Error"); }
-
-        // Visitor entry (sirf non-admins ke liye)
-        await _supabase.from('visitors').insert([{ 
-            email: currentUser?.email || "Guest", 
-            location: loc 
-        }]);
-
-        // Purana data delete karna (24h cleanup)
+        await _supabase.from('visitors').insert([{ email: currentUser?.email || "Guest", location: loc }]);
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         await _supabase.from('visitors').delete().lt('created_at', twentyFourHoursAgo);
-
     } catch(e) { console.log("Visitor update failed."); }
 }
 
 async function fetchVisitors() {
     if(!isAdmin) return;
-    
-    const { data, count } = await _supabase.from('visitors')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false });
-    
+    const { data, count } = await _supabase.from('visitors').select('*', { count: 'exact' }).order('created_at', { ascending: false });
     if(data) {
         document.getElementById('visitorCount').innerText = count || 0;
         document.getElementById('visitorDetails').innerHTML = data.map(v => {
@@ -255,7 +247,6 @@ async function fetchVisitors() {
         }).join('<br>');
     }
 }
-// -------------------------------------------------------
 
 async function handleLogin() {
     const e = loginEmail.value.trim(), p = loginPass.value.trim();
@@ -265,8 +256,6 @@ async function handleLogin() {
     loaderOverlay.style.display = 'none';
     if(error) return showToast(error.message);
     currentUser = data.user; localStorage.setItem('helloShopUser', JSON.stringify(data.user)); setupApp(e);
-    
-    // Login ke baad check karega ke admin hai ya nahi, phir log karega
     logVisitor();
 }
 
@@ -277,13 +266,7 @@ async function handleSignup() {
 
 window.onload = () => {
     const saved = localStorage.getItem('helloShopUser');
-    if(saved) { 
-        currentUser = JSON.parse(saved); 
-        setupApp(currentUser.email); 
-        logVisitor(); 
-    } else {
-        logVisitor(); // Guest visit
-    }
+    if(saved) { currentUser = JSON.parse(saved); setupApp(currentUser.email); logVisitor(); } else { logVisitor(); }
 };
 
 function setupApp(email) {
@@ -352,7 +335,11 @@ function renderHomeProducts(list) {
     products.innerHTML = list.map(p => `
         <div class="card" onclick="${!isAdmin ? `openDetail(${p.id})` : ''}">
             <img src="${p.img}">
-            <div class="card-info"><h4>${p.name}</h4><span class="price-tag">Rs ${p.price}</span></div>
+            <div class="card-info">
+                <h4>${p.name}</h4>
+                <span class="price-tag">Rs ${p.price}</span>
+                <div style="font-size:10px; color:#888;">Stock: ${p.stock || 0}</div>
+            </div>
             <div class="btn-group">
                 ${isAdmin ? `<button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteProduct(${p.id})">DELETE</button>` 
                 : `<button class="btn-small btn-order" onclick="event.stopPropagation(); openDetail(${p.id})">View Details</button>`}
@@ -366,8 +353,25 @@ async function openDetail(id) {
     loaderOverlay.style.display = 'flex';
     const { data } = await _supabase.from('product_details').select('*').eq('product_id', id).maybeSingle();
     loaderOverlay.style.display = 'none';
+    
     document.getElementById('detailTitle').innerText = p.name;
     document.getElementById('detailOldPrice').innerText = "Rs " + p.price;
+    
+    // --- STOCK LOGIC ---
+    const stock = p.stock || 0;
+    const stockLabel = document.getElementById('stockInfo');
+    const actionArea = document.getElementById('detailActionBtn');
+    
+    if(stock > 0) {
+        stockLabel.innerText = `${stock} items in stock`;
+        stockLabel.className = 'stock-badge';
+        actionArea.style.display = 'block';
+    } else {
+        stockLabel.innerText = `Out of Stock`;
+        stockLabel.className = 'stock-badge out-of-stock';
+        actionArea.style.display = 'none';
+    }
+
     if(data) {
         document.getElementById('detailDescription').innerText = data.description;
         document.getElementById('detailNewPrice').innerText = "Rs " + data.discount_price;
@@ -455,7 +459,17 @@ async function uploadDetails() {
 
 function toBase64(file) { return new Promise((resolve) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); }); }
 function previewImg(input, id) { const r = new FileReader(); r.onload = e => { adminBase64 = e.target.result; document.getElementById(id).src = e.target.result; document.getElementById(id).style.display = 'block'; }; r.readAsDataURL(input.files[0]); }
-async function addNewProduct() { await _supabase.from('products').insert([{ name: pName.value, price: pPrice.value, img: adminBase64 }]); loadProducts(); }
+
+// --- ADD NEW PRODUCT WITH STOCK ---
+async function addNewProduct() { 
+    if(!pName.value || !pPrice.value || !pStock.value || !adminBase64) return showToast("Enter all details");
+    loaderOverlay.style.display = 'flex';
+    await _supabase.from('products').insert([{ name: pName.value, price: pPrice.value, stock: parseInt(pStock.value), img: adminBase64 }]); 
+    loaderOverlay.style.display = 'none';
+    pName.value = ""; pPrice.value = ""; pStock.value = "";
+    loadProducts(); 
+}
+
 async function deleteProduct(id) { openConfirm("Delete product?", async () => { await _supabase.from('products').delete().eq('id', id); loadProducts(); }); }
 async function deleteOrder(id) { openConfirm("Delete record permanently?", async () => { await _supabase.from('orders').delete().eq('order_id', id); fetchOrders(); }); }
 
@@ -480,18 +494,46 @@ function buyNowFromDetail() {
     switchSection('cartSection'); 
 }
 
+// --- PLACE ORDER & DEDUCT STOCK ---
 async function placeOrder() {
     const trxId = document.getElementById('orderTrxId').value;
     const trxImgFile = document.getElementById('orderTrxImg').files[0];
     if(!orderName.value || !orderPhone.value || !orderAddress.value || !trxId || !trxImgFile) { return showToast("Fill all details & Upload Proof!"); }
+    
     loaderOverlay.style.display = 'flex';
     try {
+        // 1. Check stock again before placing order
+        const { data: prod } = await _supabase.from('products').select('stock').eq('id', currentDetailProduct.id).single();
+        if(prod.stock <= 0) {
+            loaderOverlay.style.display = 'none';
+            return showToast("Sorry, item just went out of stock!");
+        }
+
         const trxBase64 = await toBase64(trxImgFile);
-        const { error } = await _supabase.from('orders').insert([{ 
-            order_id: 'ORD'+Math.floor(1000 + Math.random()*9000), user_email: currentUser.email, customer_name: orderName.value, customer_phone: orderPhone.value, total_price: cartTotal.innerText, status: 'Pending', address: orderAddress.value, trx_id: trxId, trx_img: trxBase64
+        
+        // 2. Insert Order
+        const { error: orderError } = await _supabase.from('orders').insert([{ 
+            order_id: 'ORD'+Math.floor(1000 + Math.random()*9000), 
+            user_email: currentUser.email, 
+            customer_name: orderName.value, 
+            customer_phone: orderPhone.value, 
+            total_price: cartTotal.innerText, 
+            status: 'Pending', 
+            address: orderAddress.value, 
+            trx_id: trxId, 
+            trx_img: trxBase64,
+            product_id: currentDetailProduct.id
         }]);
-        if(error) throw error;
-        showToast("Order Placed Successfully!"); switchSection('ordersSection'); fetchOrders();
+        
+        if(orderError) throw orderError;
+
+        // 3. Deduct Stock (1 unit)
+        await _supabase.from('products').update({ stock: prod.stock - 1 }).eq('id', currentDetailProduct.id);
+
+        showToast("Order Placed Successfully!"); 
+        loadProducts(); // Refresh stock locally
+        switchSection('ordersSection'); 
+        fetchOrders();
     } catch (e) { showToast("Error: " + e.message); } finally { loaderOverlay.style.display = 'none'; }
 }
 
