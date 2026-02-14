@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #F85606; --bg: #f4f7f6; --gray-alert: #333333; --green-tick: #28a745; --red: #e74c3c; --blue: #3498db; }
+        :root { --primary: #FF4F00; --bg: #f4f7f6; --gray-alert: #333333; --green-tick: #28a745; --red: #e74c3c; --blue: #3498db; --white: #ffffff; }
         body { font-family: 'Poppins', sans-serif; margin:0; background: var(--bg); padding-bottom: 80px; overflow-x: hidden; }
         #loaderOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.7); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .spinner-bg { width: 50px; height: 50px; border: 5px solid #e0e0e0; border-top: 5px solid #888888; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -57,6 +57,22 @@
         .pass-container input { width: 100%; margin: 0; padding-right: 40px; }
         .toggle-pass { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px; user-select: none; background: transparent; }
         .forgot-link { display: block; margin-top: 15px; color: var(--primary); font-size: 12px; text-decoration: none; cursor: pointer; font-weight: 500; }
+
+        /* Edit Product Section Styles */
+        #editProductSection { background: var(--white); padding: 20px; border-radius: 12px; border: 1px solid var(--primary); }
+        #editProductSection h3 { color: var(--primary); }
+        #editProductSection .btn-main { background: var(--primary); color: var(--white); }
+        .preview-img { width: 70px; margin: 5px; border-radius: 8px; }
+        #currentVideoPreview { width: 100%; height: 150px; margin-bottom: 10px; }
+
+        /* Order Section for Admin */
+        #ordersSection select { background: var(--white); border: 1px solid var(--primary); color: var(--primary); }
+        #ordersSection .btn-main { background: var(--primary); color: var(--white); }
+
+        /* Cart Item */
+        .cart-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border-radius: 8px; margin-bottom: 10px; border: 1px solid #eee; }
+        .cart-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+        .cart-item input[type="checkbox"] { margin-right: 10px; }
     </style>
 </head>
 <body>
@@ -68,7 +84,7 @@
     <p id="confirmMsg" style="margin-bottom:20px;">Are you sure?</p>
     <div style="display:flex; gap:10px;">
         <button id="confirmOk" class="btn-main" style="padding:8px; font-size:12px;">OK</button>
-        <button id="confirmCancel" class="btn-main" style="padding:8px; font-size:12px; background:#666;">Cancel</button>
+        <button id="confirmCancel" class="btn-main" style="padding:8px; font-size:12px; background:var(--white); color:var(--primary);">Cancel</button>
     </div>
 </div>
 
@@ -126,32 +142,40 @@
                 <div id="visitorDetails" style="max-height:80px; overflow-y:auto; margin-top:5px; color:#666; font-size:11px;"></div>
             </div>
             <input type="text" id="pName" placeholder="Product Name">
-            <input type="number" id="pPrice" placeholder="Base Price">
+            <textarea id="pDesc" placeholder="Description" rows="4"></textarea>
+            <input type="number" id="pBasePrice" placeholder="Base Price">
+            <input type="number" id="pDiscPrice" placeholder="Discount Price">
             <input type="number" id="pStock" placeholder="Quantity (Stock)">
-            <input type="file" id="pImgFile" accept="image/*" onchange="previewImg(this, 'adminP')">
-            <img id="adminP" style="width:70px; display:none; margin:10px auto;">
-            <button class="btn-main" onclick="addNewProduct()">Add Product (Home)</button>
-            <hr>
-            <h4>Upload Details</h4>
-            <select id="detailSelectProduct"></select>
-            <input type="number" id="detailDiscPrice" placeholder="Discount Price">
-            <textarea id="detailDesc" placeholder="Description" rows="4"></textarea>
-            <input type="file" id="detailPics" accept="image/*" multiple>
-            <button class="btn-main" style="background:#444" onclick="uploadDetails()">Save Full Details</button>
+            <input type="file" id="pImages" accept="image/*" multiple>
+            <input type="file" id="pVideo" accept="video/*">
+            <button class="btn-main" onclick="addNewProduct()">Add Product</button>
         </div>
+    </div>
+
+    <div id="editProductSection" class="section">
+        <button onclick="switchSection('homeSection')" style="border:none; background:none; color:var(--primary); font-weight:bold; margin-bottom:15px;">← Back</button>
+        <h3 style="color:var(--primary)">Edit Product</h3>
+        <input type="text" id="editPName" placeholder="Product Name">
+        <textarea id="editPDesc" placeholder="Description" rows="4"></textarea>
+        <input type="number" id="editPBasePrice" placeholder="Base Price">
+        <input type="number" id="editPDiscPrice" placeholder="Discount Price">
+        <input type="number" id="editPStock" placeholder="Quantity (Stock)">
+        <div id="currentImagesPreview"></div>
+        <input type="file" id="editPImages" accept="image/*" multiple>
+        <div id="currentVideoPreview"></div>
+        <input type="file" id="editPVideo" accept="video/*">
+        <button class="btn-main" onclick="saveEditedProduct()">Save Changes</button>
     </div>
 
     <div id="productDetailPage" class="section">
         <button onclick="switchSection('homeSection')" style="border:none; background:none; color:var(--primary); font-weight:bold; margin-bottom:15px;">← Back</button>
         <div id="detailSlider" class="slider"></div>
+        <div id="detailVideo"></div>
         <div id="stockInfo" class="stock-badge"></div>
         <h2 id="detailTitle"></h2>
         <div><span id="detailOldPrice" class="old-price"></span><span id="detailNewPrice" class="new-price"></span></div>
         <p id="detailDescription"></p>
-        <div id="detailActionBtn">
-            <button class="btn-main" onclick="buyNowFromDetail()">Buy Now</button>
-            <button class="btn-main" style="background:var(--blue); margin-top:10px" onclick="showToast('Added to Cart!')">Add to Cart</button>
-        </div>
+        <div id="detailActionBtn"></div>
     </div>
 
     <div id="ordersSection" class="section">
@@ -166,33 +190,39 @@
 
     <div id="cartSection" class="section">
         <h3>Checkout</h3>
-        <div id="cartItems" style="background:#fff; padding:10px; border-radius:8px; margin-bottom:10px;"></div>
-        
-        <label style="font-size:12px; font-weight:bold;">Payment Method</label>
-        <select id="payMethodSelect" onchange="togglePaymentUI()">
-            <option value="jazzcash">JazzCash (Online)</option>
-            <option value="cod" id="codOption">Cash on Delivery (Only Layyah)</option>
-        </select>
-        <div id="codNotice" style="color:red; font-size:10px; margin-top:-5px; display:none;">COD only available in Layyah city.</div>
-
-        <div id="jazzcashDetails" class="payment-card">
-            <p style="margin-top:0; font-weight:bold; color:var(--primary)">JazzCash Payment:</p>
-            <p style="margin:2px 0; font-size:14px;"><b>Number:</b> 03299469804</p>
-            <p style="margin:2px 0; font-size:14px;"><b>Name:</b> SAJAWAL NAZEER</p>
+        <div style="position: relative;">
+            <div id="cartItems" style="background:#fff; padding:10px; border-radius:8px; margin-bottom:10px;"></div>
+            <button id="deleteSelectedCart" class="btn-small btn-delete" style="position: absolute; top: 0; right: 0; display: none;" onclick="deleteSelectedCartItems()">Delete Selected</button>
         </div>
-
-        <input type="text" id="orderName" placeholder="Full Name">
-        <input type="number" id="orderPhone" placeholder="WhatsApp Number">
-        <textarea id="orderAddress" placeholder="Full Address (Mention City)" rows="2" onkeyup="checkLayyahCity()"></textarea>
-
-        <div id="paymentProofUI" style="background:white; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:10px;">
-            <label style="font-size:12px; font-weight:bold;">Transaction ID</label>
-            <input type="text" id="orderTrxId" placeholder="Enter Trx ID" style="margin:5px 0;">
-            <label style="font-size:12px; font-weight:bold;">Payment Screenshot</label>
-            <input type="file" id="orderTrxImg" accept="image/*" style="font-size:11px;">
-        </div>
+        <button id="checkoutBtn" class="btn-main" style="display:none; margin-bottom:10px;" onclick="showCheckoutForm()">Checkout Selected</button>
         
-        <button class="btn-main" style="background:var(--green-tick); margin-top:10px;" onclick="placeOrder()">Confirm Order (Rs <span id="cartTotal">0</span>)</button>
+        <div id="checkoutForm" style="display:none;">
+            <label style="font-size:12px; font-weight:bold;">Payment Method</label>
+            <select id="payMethodSelect" onchange="togglePaymentUI()">
+                <option value="jazzcash">JazzCash (Online)</option>
+                <option value="cod" id="codOption" disabled>Cash on Delivery (Only Layyah)</option>
+            </select>
+            <div id="codNotice" style="color:red; font-size:10px; margin-top:-5px; display:none;">COD only available in Layyah city.</div>
+
+            <div id="jazzcashDetails" class="payment-card">
+                <p style="margin-top:0; font-weight:bold; color:var(--primary)">JazzCash Payment:</p>
+                <p style="margin:2px 0; font-size:14px;"><b>Number:</b> 03299469804</p>
+                <p style="margin:2px 0; font-size:14px;"><b>Name:</b> SAJAWAL NAZEER</p>
+            </div>
+
+            <input type="text" id="orderName" placeholder="Full Name">
+            <input type="number" id="orderPhone" placeholder="WhatsApp Number">
+            <textarea id="orderAddress" placeholder="Full Address (Mention City)" rows="2" onkeyup="checkLayyahCity()"></textarea>
+
+            <div id="paymentProofUI" style="background:white; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:10px;">
+                <label style="font-size:12px; font-weight:bold;">Transaction ID</label>
+                <input type="text" id="orderTrxId" placeholder="Enter Trx ID" style="margin:5px 0;">
+                <label style="font-size:12px; font-weight:bold;">Payment Screenshot</label>
+                <input type="file" id="orderTrxImg" accept="image/*" style="font-size:11px;">
+            </div>
+            
+            <button class="btn-main" style="background:var(--green-tick); margin-top:10px;" onclick="placeOrder()">Confirm Order (Rs <span id="cartTotal">0</span>)</button>
+        </div>
     </div>
 
     <div id="profileSection" class="section">
@@ -232,7 +262,7 @@ const SUPABASE_URL = "https://urrqpsmhlzldtxzstnuu.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OmqQDQdf7ye8KXbviwFYng_zPdbZpWb";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ADMIN_EMAIL = "ligerplaz@gmail.com";
-let currentUser = null, isAdmin = false, allProducts = [], adminBase64 = "", currentDetailProduct = null, userSavedAddress = "";
+let currentUser = null, isAdmin = false, allProducts = [], currentDetailProduct = null, userSavedAddress = "", editingProduct = null;
 let confirmCallback = null;
 
 function togglePass(id) {
@@ -362,7 +392,7 @@ function setupApp(email) {
         document.getElementById('userOrderTitle').style.display = 'none';
         fetchProofs(); fetchVisitors();
     }
-    loadProducts(); fetchOrders(); listenChat(); loadProfileData();
+    loadProducts(); fetchOrders(); listenChat(); loadProfileData(); renderCart();
 }
 
 async function loadProfileData() {
@@ -406,13 +436,12 @@ async function loadProducts() {
     const { data } = await _supabase.from('products').select('*').order('id', {ascending: false});
     allProducts = data || [];
     renderHomeProducts(allProducts);
-    detailSelectProduct.innerHTML = allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     loaderOverlay.style.display = 'none';
 }
 
 function renderHomeProducts(list) {
     products.innerHTML = list.map(p => `
-        <div class="card" onclick="${!isAdmin ? `openDetail(${p.id})` : ''}">
+        <div class="card" onclick="openDetail(${p.id})">
             <img src="${p.img}">
             <div class="card-info">
                 <h4>${p.name}</h4>
@@ -420,80 +449,156 @@ function renderHomeProducts(list) {
                 <div style="font-size:10px; color:#888;">Stock: ${p.stock || 0}</div>
             </div>
             <div class="btn-group">
-                ${isAdmin ? `<button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteProduct(${p.id})">DELETE</button>` 
-                : `<button class="btn-small btn-order" onclick="event.stopPropagation(); openDetail(${p.id})">View Details</button>`}
+                ${isAdmin ? `<button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteProduct(${p.id})">DELETE</button>` : ''}
             </div>
         </div>`).join('');
 }
 
 async function openDetail(id) {
     const p = allProducts.find(x => x.id === id);
-    currentDetailProduct = p;
+    currentDetailProduct = {...p};
     loaderOverlay.style.display = 'flex';
     const { data } = await _supabase.from('product_details').select('*').eq('product_id', id).maybeSingle();
     loaderOverlay.style.display = 'none';
+    if(data) {
+        currentDetailProduct.desc = data.description;
+        currentDetailProduct.disc_price = data.discount_price;
+        currentDetailProduct.images = data.images;
+        currentDetailProduct.video = data.video;
+    }
     document.getElementById('detailTitle').innerText = p.name;
     document.getElementById('detailOldPrice').innerText = "Rs " + p.price;
+    document.getElementById('detailNewPrice').innerText = "Rs " + (currentDetailProduct.disc_price || p.price);
+    document.getElementById('detailDescription').innerText = currentDetailProduct.desc || "No details.";
+    detailSlider.innerHTML = (currentDetailProduct.images || [p.img]).map(img => `<img src="${img}">`).join('');
+    document.getElementById('detailVideo').innerHTML = currentDetailProduct.video ? `<video controls src="${currentDetailProduct.video}" style="width:100%; height:250px; border-radius:12px;"></video>` : '';
     const stock = p.stock || 0;
     const stockLabel = document.getElementById('stockInfo');
-    const actionArea = document.getElementById('detailActionBtn');
-    if(stock > 0) { stockLabel.innerText = `${stock} items in stock`; stockLabel.className = 'stock-badge'; actionArea.style.display = 'block'; }
-    else { stockLabel.innerText = `Out of Stock`; stockLabel.className = 'stock-badge out-of-stock'; actionArea.style.display = 'none'; }
-    if(data) {
-        document.getElementById('detailDescription').innerText = data.description;
-        document.getElementById('detailNewPrice').innerText = "Rs " + data.discount_price;
-        detailSlider.innerHTML = (data.images || [p.img]).map(img => `<img src="${img}">`).join('');
+    if(stock > 0) { stockLabel.innerText = `${stock} items in stock`; stockLabel.className = 'stock-badge'; } 
+    else { stockLabel.innerText = `Out of Stock`; stockLabel.className = 'stock-badge out-of-stock'; }
+    const actionBtn = document.getElementById('detailActionBtn');
+    if(isAdmin) {
+        actionBtn.innerHTML = `
+            <button class="btn-main" onclick="editProduct(${id})">Edit Product</button>
+            <button class="btn-main" style="background:var(--red); margin-top:10px" onclick="deleteProduct(${id})">Delete Product</button>
+        `;
     } else {
-        document.getElementById('detailDescription').innerText = "No details.";
-        document.getElementById('detailNewPrice').innerText = "Rs " + p.price;
-        detailSlider.innerHTML = `<img src="${p.img}">`;
+        actionBtn.innerHTML = stock > 0 ? `
+            <button class="btn-main" onclick="buyNowFromDetail()">Buy Now</button>
+            <button class="btn-main" style="background:var(--blue); margin-top:10px" onclick="addToCart()">Add to Cart</button>
+        ` : '';
     }
     switchSection('productDetailPage');
+}
+
+async function editProduct(id) {
+    editingProduct = {...currentDetailProduct, id: id};
+    document.getElementById('editPName').value = editingProduct.name;
+    document.getElementById('editPDesc').value = editingProduct.desc || '';
+    document.getElementById('editPBasePrice').value = editingProduct.price;
+    document.getElementById('editPDiscPrice').value = editingProduct.disc_price || '';
+    document.getElementById('editPStock').value = editingProduct.stock;
+    document.getElementById('currentImagesPreview').innerHTML = (editingProduct.images || [editingProduct.img]).map(img => `<img src="${img}" class="preview-img">`).join('');
+    document.getElementById('currentVideoPreview').innerHTML = editingProduct.video ? `<video controls src="${editingProduct.video}" style="width:100%; height:150px;"></video>` : 'No video';
+    switchSection('editProductSection');
+}
+
+async function saveEditedProduct() {
+    if(!editPName.value || !editPBasePrice.value || !editPStock.value) return showToast("Enter required details");
+    loaderOverlay.style.display = 'flex';
+    let imgs = editingProduct.images || [editingProduct.img];
+    if(editPImages.files.length) {
+        if(editPImages.files.length > 3) return showToast("Max 3 images");
+        imgs = await Promise.all([...editPImages.files].map(toBase64));
+    }
+    let video = editingProduct.video;
+    if(editPVideo.files[0]) video = await toBase64(editPVideo.files[0]);
+    await _supabase.from('products').update({ name: editPName.value, price: editPBasePrice.value, stock: parseInt(editPStock.value), img: imgs[0] || '' }).eq('id', editingProduct.id);
+    await _supabase.from('product_details').upsert([{ product_id: editingProduct.id, description: editPDesc.value, discount_price: editPDiscPrice.value, images: imgs, video: video }], { onConflict: 'product_id' });
+    loaderOverlay.style.display = 'none';
+    showToast("Product Updated!");
+    loadProducts();
+    switchSection('homeSection');
 }
 
 async function fetchOrders() {
     const { data } = await _supabase.from('orders').select('*').order('id', {ascending: false});
     const list = isAdmin ? (data || []) : (data ? data.filter(o => o.user_email === currentUser.email) : []);
-    if(isAdmin) { adminOrderSelect.innerHTML = '<option value="">Select Order</option>' + list.map(o => `<option value="${o.order_id}">${o.order_id} - ${o.customer_name}</option>`).join(''); }
+    if(isAdmin) {
+        adminOrderSelect.innerHTML = '<option value="">Select Order</option>' + list.map(o => `<option value="${o.order_id}">${o.order_id} - ${o.customer_name}</option>`).join('');
+    }
     userOrdersList.innerHTML = list.map(o => `
         <div style="background:white; padding:15px; border-radius:10px; margin-bottom:10px; border-left:5px solid var(--primary)">
             <span class="status-badge ${o.status}">${o.status}</span>
             <b>ID: ${o.order_id}</b><br>
             <small>Total: Rs ${o.total_price} | Payment: ${o.trx_id ? 'JazzCash' : 'COD'}</small>
-            ${isAdmin ? `<div>👤 ${o.customer_name} | 📞 ${o.customer_phone}<br>📍 ${o.address}</div>
-            <select style="margin-top:10px" onchange="updateStatus('${o.order_id}', this.value)">
-                <option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option>
-                <option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option>
-            </select>` : ''}
+            <div>Items: ${o.items ? o.items.map(i => i.name).join(', ') : 'N/A'}</div>
+            ${isAdmin ? `
+                <div>👤 ${o.customer_name} | 📞 ${o.customer_phone}<br>📍 ${o.address}</div>
+                <select style="margin-top:10px" onchange="updateStatus('${o.order_id}', this.value)">
+                    <option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option>
+                    <option value="Processing" ${o.status==='Processing'?'selected':''}>Processing</option>
+                    <option value="Shipped" ${o.status==='Shipped'?'selected':''}>Shipped</option>
+                    <option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option>
+                    <option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option>
+                </select>
+            ` : ''}
+            ${!isAdmin && (o.status === 'Delivered' || o.status === 'Cancelled') ? `<button class="btn-small btn-delete" onclick="deleteUserOrder('${o.order_id}')">Delete</button>` : ''}
         </div>`).join('');
+}
+
+async function deleteUserOrder(id) {
+    openConfirm("Delete this order?", async () => {
+        await _supabase.from('orders').delete().eq('order_id', id).eq('user_email', currentUser.email);
+        fetchOrders();
+    });
 }
 
 async function fetchProofs() {
     const { data } = await _supabase.from('orders').select('*').not('trx_id', 'is', null);
-    if(data) { adminProofSelect.innerHTML = '<option value="">Select Proof</option>' + data.map(p => `<option value="${p.order_id}">${p.order_id}</option>`).join(''); }
+    if(data) {
+        adminProofSelect.innerHTML = '<option value="">Select Proof</option>' + data.map(p => `<option value="${p.order_id}">${p.order_id}</option>`).join('');
+        proofsList.innerHTML = data.map(p => `
+            <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                <b>Order ${p.order_id}</b> - Trx ${p.trx_id}<br>
+                <img src="${p.trx_img}" style="width:100px; border-radius:8px;"><br>
+                <button class="btn-small btn-order" onclick="whatsappTo('${p.customer_phone}', '${p.order_id}')">Confirm on WA</button>
+            </div>
+        `).join('');
+    }
+}
+
+function whatsappTo(phone, id) {
+    if(phone.startsWith('0')) phone = '92' + phone.slice(1);
+    location.href = `https://wa.me/+${phone}?text=Your order ${id} is confirmed!`;
 }
 
 function toggleOrderDelBtn() { adminDelOrderBtn.style.display = adminOrderSelect.value ? 'block' : 'none'; }
 function toggleProofDelBtn() { adminDelProofBtn.style.display = adminProofSelect.value ? 'block' : 'none'; }
 
-async function uploadDetails() {
-    let imgs = []; loaderOverlay.style.display = 'flex';
-    for(let f of detailPics.files) { imgs.push(await toBase64(f)); }
-    await _supabase.from('product_details').upsert([{ product_id: detailSelectProduct.value, description: detailDesc.value, discount_price: detailDiscPrice.value, images: imgs }], { onConflict: 'product_id' });
-    loaderOverlay.style.display = 'none'; showToast("Saved!"); switchSection('homeSection');
-}
-
 function toBase64(file) { return new Promise((resolve) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); }); }
-function previewImg(input, id) { const r = new FileReader(); r.onload = e => { adminBase64 = e.target.result; document.getElementById(id).src = e.target.result; document.getElementById(id).style.display = 'block'; }; r.readAsDataURL(input.files[0]); }
 
 async function addNewProduct() { 
-    if(!pName.value || !pPrice.value || !pStock.value || !adminBase64) return showToast("Enter all details");
+    if(!pName.value || !pBasePrice.value || !pStock.value || !pImages.files.length) return showToast("Enter all required details");
+    if(pImages.files.length > 3) return showToast("Max 3 images");
     loaderOverlay.style.display = 'flex';
-    await _supabase.from('products').insert([{ name: pName.value, price: pPrice.value, stock: parseInt(pStock.value), img: adminBase64 }]); 
-    loaderOverlay.style.display = 'none'; loadProducts(); 
+    const imgs = await Promise.all([...pImages.files].map(toBase64));
+    const video = pVideo.files[0] ? await toBase64(pVideo.files[0]) : null;
+    const { data: prod } = await _supabase.from('products').insert([{ name: pName.value, price: pBasePrice.value, stock: parseInt(pStock.value), img: imgs[0] || '' }]).select().single(); 
+    if(prod) await _supabase.from('product_details').insert([{ product_id: prod.id, description: pDesc.value, discount_price: pDiscPrice.value, images: imgs, video: video }]);
+    loaderOverlay.style.display = 'none'; 
+    showToast("Product Added!");
+    loadProducts(); 
 }
 
-async function deleteProduct(id) { openConfirm("Delete product?", async () => { await _supabase.from('products').delete().eq('id', id); loadProducts(); }); }
+async function deleteProduct(id) { 
+    openConfirm("Delete product?", async () => { 
+        await _supabase.from('products').delete().eq('id', id); 
+        await _supabase.from('product_details').delete().eq('product_id', id);
+        loadProducts(); 
+        if(editingProduct && editingProduct.id === id) switchSection('homeSection');
+    }); 
+}
 
 async function updateStatus(id, s) { 
     loaderOverlay.style.display = 'flex';
@@ -501,42 +606,140 @@ async function updateStatus(id, s) {
     loaderOverlay.style.display = 'none'; showToast("Status Updated!"); fetchOrders(); 
 }
 
+async function deleteSelectedOrder() {
+    const id = adminOrderSelect.value;
+    if(!id) return;
+    openConfirm("Delete order?", async () => {
+        await _supabase.from('orders').delete().eq('order_id', id);
+        fetchOrders(); fetchProofs();
+    });
+}
+
+async function deleteSelectedProof() {
+    const id = adminProofSelect.value;
+    if(!id) return;
+    openConfirm("Delete proof?", async () => {
+        await _supabase.from('orders').update({ trx_id: null, trx_img: null }).eq('order_id', id);
+        fetchProofs();
+    });
+}
+
 function switchSection(id, btn) { 
     document.querySelectorAll('.section').forEach(s => s.style.display = 'none'); 
     document.getElementById(id).style.display = 'block'; 
     if(btn) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active')); btn.classList.add('nav-active'); }
+    if(id === 'cartSection') renderCart();
 }
 
 function buyNowFromDetail() { 
-    cartItems.innerHTML = `<b>${currentDetailProduct.name}</b>`; 
-    cartTotal.innerText = document.getElementById('detailNewPrice').innerText.replace('Rs ', ''); 
+    addToCart(true);
+}
+
+function addToCart(buyNow = false) {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    if(cart.find(c => c.id === currentDetailProduct.id)) return showToast("Already in cart!");
+    const item = {
+        id: currentDetailProduct.id,
+        name: currentDetailProduct.name,
+        price: currentDetailProduct.disc_price || currentDetailProduct.price,
+        img: currentDetailProduct.img
+    };
+    cart.push(item);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    showToast("Added to Cart!");
+    if(buyNow) {
+        switchSection('cartSection');
+    }
+}
+
+function renderCart() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    if(cart.length === 0) {
+        document.getElementById('cartItems').innerHTML = '<h3 style="text-align:center;">THERE IS NO PRODUCT IN CART</h3><button class="btn-main" style="width:100%; margin-top:10px;" onclick="switchSection(\'homeSection\')">Explore</button>';
+        document.getElementById('deleteSelectedCart').style.display = 'none';
+        document.getElementById('checkoutBtn').style.display = 'none';
+        document.getElementById('checkoutForm').style.display = 'none';
+        return;
+    }
+    document.getElementById('cartItems').innerHTML = cart.map(c => `
+        <div class="cart-item">
+            <input type="checkbox" data-id="${c.id}" onchange="updateCartUI()">
+            <img src="${c.img}">
+            <div>
+                <b>${c.name}</b><br>
+                Rs ${c.price}
+            </div>
+        </div>
+    `).join('');
+    updateCartUI();
+}
+
+function updateCartUI() {
+    const checked = [...document.querySelectorAll('#cartItems input[type="checkbox"]:checked')].map(ch => ch.dataset.id);
+    document.getElementById('deleteSelectedCart').style.display = checked.length > 0 ? 'block' : 'none';
+    document.getElementById('checkoutBtn').style.display = checked.length > 0 ? 'block' : 'none';
+    document.getElementById('checkoutForm').style.display = 'none';
+}
+
+function deleteSelectedCartItems() {
+    const checked = [...document.querySelectorAll('#cartItems input[type="checkbox"]:checked')].map(ch => ch.dataset.id);
+    if(checked.length === 0) return;
+    openConfirm("Delete selected items?", () => {
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        cart = cart.filter(c => !checked.includes(c.id.toString()));
+        localStorage.setItem('cart', JSON.stringify(cart));
+        renderCart();
+    });
+}
+
+function showCheckoutForm() {
+    const checked = [...document.querySelectorAll('#cartItems input[type="checkbox"]:checked')].map(ch => ch.dataset.id);
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const selected = cart.filter(c => checked.includes(c.id.toString()));
+    const total = selected.reduce((sum, s) => sum + s.price, 0);
+    document.getElementById('cartTotal').innerText = total;
     document.getElementById('orderAddress').value = userSavedAddress;
     checkLayyahCity();
-    switchSection('cartSection'); 
+    document.getElementById('checkoutForm').style.display = 'block';
+    currentDetailProduct = { items: selected }; // Temp for placeOrder
 }
 
 async function placeOrder() {
     const method = document.getElementById('payMethodSelect').value;
     const trxId = document.getElementById('orderTrxId').value;
     const trxImgFile = document.getElementById('orderTrxImg').files[0];
-    if(!orderName.value || !orderPhone.value || !orderAddress.value) return showToast("Enter Name, Phone and Address!");
+    const name = orderName.value, phone = orderPhone.value, addr = orderAddress.value;
+    if(!name || !phone || !addr) return showToast("Enter Name, Phone and Address!");
     if(method === 'jazzcash' && (!trxId || !trxImgFile)) return showToast("Upload JazzCash Proof!");
     loaderOverlay.style.display = 'flex';
     try {
-        const { data: prod } = await _supabase.from('products').select('stock').eq('id', currentDetailProduct.id).single();
-        if(prod.stock <= 0) { loaderOverlay.style.display = 'none'; return showToast("Out of stock!"); }
+        const items = currentDetailProduct.items;
+        for(let item of items) {
+            const { data: prod } = await _supabase.from('products').select('stock').eq('id', item.id).single();
+            if(prod.stock <= 0) throw new Error(`${item.name} out of stock!`);
+        }
         let trxBase64 = null;
         if(method === 'jazzcash') trxBase64 = await toBase64(trxImgFile);
+        const orderId = 'ORD'+Math.floor(1000 + Math.random()*9000);
+        const total = items.reduce((sum, i) => sum + i.price, 0);
         await _supabase.from('orders').insert([{ 
-            order_id: 'ORD'+Math.floor(1000 + Math.random()*9000), user_email: currentUser.email, customer_name: orderName.value, customer_phone: orderPhone.value, total_price: cartTotal.innerText, status: 'Pending', address: orderAddress.value, trx_id: (method==='cod' ? null : trxId), trx_img: trxBase64, product_id: currentDetailProduct.id
+            order_id: orderId, user_email: currentUser.email, customer_name: name, customer_phone: phone, address: addr, 
+            total_price: total, status: 'Pending', trx_id: (method==='cod' ? null : trxId), trx_img: trxBase64, items: items
         }]);
-        await _supabase.from('products').update({ stock: prod.stock - 1 }).eq('id', currentDetailProduct.id);
-        showToast("Order Placed!"); loadProducts(); switchSection('ordersSection'); fetchOrders();
+        for(let item of items) {
+            await _supabase.from('products').update({ stock: _supabase.raw('stock - 1') }).eq('id', item.id);
+        }
+        localStorage.removeItem('cart');
+        showToast("Order Placed!");
+        renderCart();
+        switchSection('ordersSection'); 
+        fetchOrders();
+        if(isAdmin) fetchProofs();
     } catch (e) { showToast("Error: " + e.message); } finally { loaderOverlay.style.display = 'none'; }
 }
 
 function showToast(m) { customToast.innerText = m; customToast.style.display = 'block'; setTimeout(()=>customToast.style.display='none',3000); }
-function userLogout() { localStorage.removeItem('helloShopUser'); location.reload(); }
+function userLogout() { localStorage.removeItem('helloShopUser'); localStorage.removeItem('cart'); location.reload(); }
 function toggleChat() { chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex'; }
 async function sendMsg() { await _supabase.from('messages').insert([{ sender: currentUser.email, text: chatInput.value, receiver: isAdmin ? "CUSTOMER" : ADMIN_EMAIL }]); chatInput.value = ""; }
 function listenChat() { _supabase.channel('any').on('postgres_changes', { event: 'INSERT', table: 'messages' }, () => renderMessages()).subscribe(); renderMessages(); }
