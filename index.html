@@ -546,7 +546,7 @@ function setupApp(email) {
         document.getElementById('adminOrderHeader').style.display = 'flex';
         document.getElementById('userOrderTitle').style.display = 'none';
         document.getElementById('chatUserSelector').style.display = 'block';
-        fetchProofs(); // Removed fetchVisitors
+        fetchProofs();
     } else {
         document.getElementById('displayEmail').innerText = email;
         document.getElementById('userNameBook').style.display = 'block';
@@ -768,7 +768,6 @@ async function placeBuyNowOrder() {
             price: currentDetailProduct.disc_price || currentDetailProduct.price,
             img: currentDetailProduct.img
         }];
-        // Check & decrease stock safely
         for (let item of items) {
             const { data: prod, error: stockErr } = await _supabase
                 .from('products')
@@ -1060,7 +1059,7 @@ function showCheckoutForm() {
     document.getElementById('orderAddress').value = userSavedAddress;
     checkLayyahCity();
     document.getElementById('checkoutForm').style.display = 'block';
-    currentDetailProduct = { items: selected }; // Temp for placeOrder
+    currentDetailProduct = { items: selected };
 }
 
 async function placeOrder() {
@@ -1085,7 +1084,6 @@ async function placeOrder() {
         const items = currentDetailProduct.items || [];
         if (items.length === 0) throw new Error("No items selected");
 
-        // Check & decrease stock safely
         for (let item of items) {
             const { data: prod, error: stockErr } = await _supabase
                 .from('products')
@@ -1144,67 +1142,172 @@ async function placeOrder() {
     }
 }
 
-function showToast(m) { customToast.innerText = m; customToast.style.display = 'block'; setTimeout(()=>customToast.style.display='none',3000); }
-function userLogout() { localStorage.removeItem('helloShopUser'); localStorage.removeItem('cart'); location.reload(); }
-function toggleChat() { chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex'; }
+function showToast(m) { 
+    customToast.innerText = m; 
+    customToast.style.display = 'block'; 
+    setTimeout(()=>customToast.style.display='none',3000); 
+}
+
+function userLogout() { 
+    localStorage.removeItem('helloShopUser'); 
+    localStorage.removeItem('cart'); 
+    location.reload(); 
+}
+
+function toggleChat() { 
+    const win = document.getElementById('chatWindow');
+    win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
+    if (win.style.display === 'flex' && !isAdmin) {
+        renderMessages();
+    }
+}
+
 async function sendMsg() { 
-    if (chatInput.value.trim() === '') return;
-    let payload = { sender: isAdmin ? ADMIN_EMAIL : currentUser.email, text: chatInput.value };
-    if(!isAdmin) payload.user_id = currentUser.email;
-    else if(document.getElementById('chatUserSelect').value) payload.user_id = document.getElementById('chatUserSelect').value;
-    else return showToast("Select user to reply");
-    await _supabase.from('messages').insert([payload]); 
-    chatInput.value = ""; 
+    const text = document.getElementById('chatInput').value.trim();
+    if (!text) return;
+
+    let payload = { 
+        sender: isAdmin ? ADMIN_EMAIL : currentUser.email, 
+        text: text 
+    };
+
+    if(!isAdmin) {
+        payload.user_id = currentUser.email;
+    } else {
+        const selected = document.getElementById('chatUserSelect').value;
+        if(!selected) return showToast("Select user to reply");
+        payload.user_id = selected;
+    }
+
+    const { error } = await _supabase.from('messages').insert([payload]);
+    if (error) {
+        console.error(error);
+        showToast("Message send failed");
+        return;
+    }
+
+    document.getElementById('chatInput').value = "";
+    await renderMessages();
+    if (isAdmin) await loadChatUsers();
 }
-function listenChat() { _supabase.channel('any').on('postgres_changes', { event: 'INSERT', table: 'messages' }, () => { renderMessages(); if(isAdmin) loadChatUsers(); }).subscribe(); if(isAdmin) loadChatUsers(); renderMessages(); }
-async function loadChatUsers(){
-  const {data} = await _supabase.from('messages').select('user_id').neq('user_id', null);
-  if(data) {
+
+function listenChat() {
+    _supabase
+        .channel('public:messages')
+        .on('postgres_changes', 
+            { event: 'INSERT', schema: 'public', table: 'messages' }, 
+            () => {
+                renderMessages();
+                if (isAdmin) loadChatUsers();
+            }
+        )
+        .subscribe();
+
+    // Initial messages load
+    renderMessages();
+    if (isAdmin) loadChatUsers();
+}
+
+async function loadChatUsers() {
+    const { data, error } = await _supabase
+        .from('messages')
+        .select('user_id')
+        .neq('user_id', null)
+        .neq('user_id', ADMIN_EMAIL);
+
+    if (error || !data || data.length === 0) return;
+
     const users = [...new Set(data.map(d => d.user_id))];
-    const {data:profs} = await _supabase.from('profiles').select('email, full_name').in('email', users);
-    const userMap = profs.reduce((acc,p) => {acc[p.email] = p.full_name || p.email; return acc;}, {});
-    document.getElementById('chatUserSelect').innerHTML = '<option value="">Select User</option>' + users.map(u => `<option value="${u}">${userMap[u]}</option>`).join('');
-  }
+
+    const { data: profiles } = await _supabase
+        .from('profiles')
+        .select('email, full_name')
+        .in('email', users);
+
+    const userMap = (profiles || []).reduce((acc, p) => {
+        acc[p.email] = p.full_name || p.email.split('@')[0];
+        return acc;
+    }, {});
+
+    const select = document.getElementById('chatUserSelect');
+    select.innerHTML = '<option value="">Select User</option>' + 
+        users.map(u => `<option value="${u}">${userMap[u] || u}</option>`).join('');
 }
+
 async function renderMessages() {
-    const { data: messages } = await _supabase.from('messages').select('*').order('created_at', {ascending: true});
-    if(!messages) return;
-    // Fetch profiles for unique senders
-    const uniqueSenders = [...new Set(messages.map(m => m.sender))].filter(s => s !== ADMIN_EMAIL);
-    if (uniqueSenders.length > 0) {
-        const { data: profiles } = await _supabase.from('profiles').select('email, full_name, profile_pic').in('email', uniqueSenders);
-        userProfiles = profiles.reduce((acc, p) => {
-            acc[p.email] = { name: p.full_name || p.email, dp: p.profile_pic || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' };
+    const { data: messages, error } = await _supabase
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+    if (error || !messages) {
+        document.getElementById('chatMessages').innerHTML = '<div style="text-align:center; color:#888; padding:20px;">Messages could not be loaded</div>';
+        return;
+    }
+
+    // Load sender profiles for better display
+    const senders = [...new Set(messages.map(m => m.sender))].filter(s => s !== ADMIN_EMAIL);
+    if (senders.length > 0) {
+        const { data: profiles } = await _supabase
+            .from('profiles')
+            .select('email, full_name, profile_pic')
+            .in('email', senders);
+
+        userProfiles = (profiles || []).reduce((acc, p) => {
+            acc[p.email] = {
+                name: p.full_name || p.email.split('@')[0],
+                dp: p.profile_pic || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
+            };
             return acc;
         }, {});
     }
+
     const filtered = messages.filter(m => {
-      if(isAdmin){
-        const selected = document.getElementById('chatUserSelect').value;
-        if(!selected) {
-          chatMessages.innerHTML = '<div style="text-align:center; color:#666;">Select a user to chat</div>';
-          return false;
+        if (isAdmin) {
+            const selectedUser = document.getElementById('chatUserSelect').value;
+            if (!selectedUser) return false;
+            return m.user_id === selectedUser;
         }
-        return m.user_id === selected;
-      } else {
         return m.user_id === currentUser.email;
-      }
     });
-    chatMessages.innerHTML = filtered.map(m => {
-        const isMe = m.sender === (isAdmin ? ADMIN_EMAIL : currentUser.email);
-        const name = isMe ? (isAdmin ? 'Admin' : userSavedName || 'You') : (m.sender === ADMIN_EMAIL ? 'Admin' : userProfiles[m.sender]?.name || m.sender);
-        const dp = isMe ? (isAdmin ? 'https://cdn-icons-png.flaticon.com/512/149/149071.png' : document.getElementById('userProfilePic').src) : (m.sender === ADMIN_EMAIL ? 'https://cdn-icons-png.flaticon.com/512/149/149071.png' : userProfiles[m.sender]?.dp || 'https://cdn-icons-png.flaticon.com/512/149/149071.png');
-        return `<div class="${isMe ? 'msg-me' : 'msg-them'} msg">
-            <div class="msg-header ${isMe ? 'msg-me' : 'msg-them'}">
-                <img src="${dp}">
-                ${name}
-            </div>
-            ${m.text}
-        </div>`;
-    }).join('');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    const chatDiv = document.getElementById('chatMessages');
+
+    if (filtered.length === 0) {
+        chatDiv.innerHTML = '<div style="text-align:center; color:#888; padding:30px 10px;">No messages yet</div>';
+    } else {
+        chatDiv.innerHTML = filtered.map(m => {
+            const isMe = m.sender === (isAdmin ? ADMIN_EMAIL : currentUser.email);
+            const senderName = isMe 
+                ? (isAdmin ? 'Admin' : (userSavedName || currentUser.email.split('@')[0] || 'You'))
+                : (m.sender === ADMIN_EMAIL ? 'Admin' : (userProfiles[m.sender]?.name || m.sender.split('@')[0]));
+
+            const dpUrl = isMe 
+                ? (isAdmin 
+                    ? 'https://cdn-icons-png.flaticon.com/512/149/149071.png' 
+                    : (document.getElementById('userProfilePic')?.src || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'))
+                : (m.sender === ADMIN_EMAIL 
+                    ? 'https://cdn-icons-png.flaticon.com/512/149/149071.png' 
+                    : (userProfiles[m.sender]?.dp || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'));
+
+            return `
+                <div class="${isMe ? 'msg-me' : 'msg-them'} msg">
+                    <div class="msg-header ${isMe ? 'msg-me' : 'msg-them'}">
+                        <img src="${dpUrl}" alt="dp">
+                        <span>${senderName}</span>
+                    </div>
+                    ${m.text}
+                </div>
+            `;
+        }).join('');
+    }
+
+    chatDiv.scrollTop = chatDiv.scrollHeight;
 }
-function searchProducts() { renderHomeProducts(allProducts.filter(p => p.name.toLowerCase().includes(searchBar.value.toLowerCase()))); }
+
+function searchProducts() { 
+    renderHomeProducts(allProducts.filter(p => p.name.toLowerCase().includes(searchBar.value.toLowerCase()))); 
+}
 
 function searchCategory(cat) {
     const searchInput = document.getElementById(cat + 'Search').value.toLowerCase();
