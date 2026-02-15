@@ -7,16 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { 
-            --primary: #FF4F00; 
-            --primary-dark: #e64500;
-            --bg: #f4f7f6; 
-            --gray-alert: #333333; 
-            --green-tick: #28a745; 
-            --red: #e74c3c; 
-            --blue: #3498db; 
-            --white: #ffffff; 
-        }
+        :root { --primary: #FF4F00; --bg: #f4f7f6; --gray-alert: #333333; --green-tick: #28a745; --red: #e74c3c; --blue: #3498db; --white: #ffffff; }
         body { font-family: 'Poppins', sans-serif; margin:0; background: var(--bg); padding-bottom: 80px; overflow-x: hidden; }
         #loaderOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.7); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .spinner-bg { width: 50px; height: 50px; border: 5px solid #e0e0e0; border-top: 5px solid #888888; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -29,8 +20,7 @@
         .search-area { background: white; padding: 10px; position: sticky; top: 55px; z-index: 999; border-bottom: 1px solid #eee; }
         #searchBar { width: 90%; padding: 10px 15px; display: block; margin: 0 auto; border: 1px solid #ddd; border-radius: 25px; outline: none; }
         #products { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
-        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; cursor: pointer; transition: all 0.18s; }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.1); }
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; cursor: pointer; }
         .card img { width: 100%; height: 140px; object-fit: cover; }
         .card-info { padding: 10px; }
         .price-tag { color: var(--primary); font-weight: 700; }
@@ -65,49 +55,6 @@
         .user-pic-container { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin: 0 auto 10px; border: 3px solid var(--primary); }
         .payment-card { background: #fff8f5; border: 1px solid #ffccbc; padding: 15px; border-radius: 8px; margin: 10px 0; }
         .admin-select-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-
-        /* ─── CATEGORY MENU & CATEGORY PAGE ─── */
-        #categoryMenu { 
-            position:fixed; top:0; left:0; width:70%; height:100%; 
-            background: var(--white); z-index:2000; display:none; 
-            padding:20px; overflow:auto; box-shadow: 3px 0 15px rgba(0,0,0,0.15);
-        }
-        #categoryMenu h3 { 
-            color: var(--primary); border-bottom: 2px solid var(--primary); 
-            padding-bottom: 10px; margin-bottom: 20px;
-        }
-        #categoryMenu ul { list-style:none; padding:0; margin:0; }
-        #categoryMenu li { 
-            padding:14px 10px; font-size:15px; border-bottom:1px solid #eee; 
-            cursor:pointer; transition:all 0.2s;
-        }
-        #categoryMenu li:hover { 
-            background:#fff5f0; color:var(--primary-dark); padding-left:18px;
-        }
-
-        .category-page-header {
-            background: var(--primary);
-            color: white;
-            padding: 14px 16px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-        .category-page-header button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-        }
-        .no-products {
-            text-align: center;
-            padding: 60px 20px;
-            color: #777;
-            font-size: 15px;
-        }
 
         /* Login Security Features */
         .pass-container { position: relative; width: 92%; margin: 10px auto; }
@@ -162,11 +109,11 @@
   <span onclick="toggleMenu()" style="float:right; cursor:pointer">✖</span>
   <h3>Categories</h3>
   <ul>
-    <li onclick="openCategory('electronics')">Electronics</li>
-    <li onclick="openCategory('fashion')">Fashion</li>
-    <li onclick="openCategory('books')">Books</li>
-    <li onclick="openCategory('home')">Home</li>
-    <li onclick="openCategory('beauty')">Beauty</li>
+    <li>Electronics (locked)</li>
+    <li>Fashion (locked)</li>
+    <li>Books (locked)</li>
+    <li>Home (locked)</li>
+    <li>Beauty (locked)</li>
   </ul>
 </div>
 
@@ -223,15 +170,6 @@
     <div id="homeSection" class="section active-section">
         <div class="search-area"><input type="text" id="searchBar" placeholder="Search..." onkeyup="searchProducts()"></div>
         <div id="products">Loading...</div>
-    </div>
-
-    <!-- New Category Products Page -->
-    <div id="categoryProductsSection" class="section">
-        <div class="category-page-header">
-            <button onclick="switchSection('homeSection')">←</button>
-            <span id="categoryTitle">Category</span>
-        </div>
-        <div id="categoryProductsGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px;"></div>
     </div>
 
     <div id="adminPanelSection" class="section">
@@ -421,10 +359,7 @@ const ADMIN_EMAIL = "ligerplaz@gmail.com";
 let currentUser = null, isAdmin = false, allProducts = [], currentDetailProduct = null, userSavedAddress = "", userSavedName = "", editingProduct = null;
 let confirmCallback = null, userProfiles = {};
 
-function toggleMenu(){ 
-    const menu = document.getElementById('categoryMenu');
-    menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; 
-}
+function toggleMenu(){ document.getElementById('categoryMenu').style.display = document.getElementById('categoryMenu').style.display === 'block' ? 'none' : 'block'; }
 
 function togglePass(id) {
     const p = document.getElementById(id);
@@ -581,7 +516,7 @@ function setupApp(email) {
         document.getElementById('adminOrderHeader').style.display = 'flex';
         document.getElementById('userOrderTitle').style.display = 'none';
         document.getElementById('chatUserSelector').style.display = 'block';
-        fetchProofs();
+        fetchProofs(); // Removed fetchVisitors
     } else {
         document.getElementById('displayEmail').innerText = email;
         document.getElementById('userNameBook').style.display = 'block';
@@ -671,7 +606,7 @@ async function loadProducts() {
     allProducts = data || [];
     renderHomeProducts(allProducts);
     if(isAdmin){
-      document.getElementById('assignProductSelect').innerHTML = '<option value="">Select Product</option>' + allProducts.map(p => `<option value="\( {p.id}"> \){p.name}</option>`).join('');
+      document.getElementById('assignProductSelect').innerHTML = '<option value="">Select Product</option>' + allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     }
     loaderOverlay.style.display = 'none';
 }
@@ -686,7 +621,7 @@ function renderHomeProducts(list) {
                 <div style="font-size:10px; color:#888;">Stock: ${p.stock || 0}</div>
             </div>
             <div class="btn-group">
-                \( {isAdmin ? `<button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteProduct( \){p.id})">DELETE</button>` : ''}
+                ${isAdmin ? `<button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteProduct(${p.id})">DELETE</button>` : ''}
             </div>
         </div>`).join('');
 }
@@ -726,49 +661,6 @@ async function openDetail(id) {
         ` : '';
     }
     switchSection('productDetailPage');
-}
-
-function openCategory(cat) {
-    toggleMenu();
-    
-    const titles = {
-        electronics: "Electronics",
-        fashion: "Fashion",
-        books: "Books",
-        home: "Home",
-        beauty: "Beauty"
-    };
-    
-    document.getElementById('categoryTitle').textContent = titles[cat] || cat;
-    
-    const filtered = allProducts.filter(p => p.category === cat);
-    
-    const container = document.getElementById('categoryProductsGrid');
-    container.innerHTML = '';
-    
-    if (filtered.length === 0) {
-        container.innerHTML = `<div class="no-products">No products available in this category yet.</div>`;
-    } else {
-        filtered.forEach(p => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-                <img src="${p.img}">
-                <div class="card-info">
-                    <h4>${p.name}</h4>
-                    <span class="price-tag">Rs ${p.price}</span>
-                    <div style="font-size:10px; color:#888;">Stock: ${p.stock || 0}</div>
-                </div>
-                <div class="btn-group">
-                    \( {isAdmin ? `<button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteProduct( \){p.id})">DELETE</button>` : ''}
-                </div>
-            `;
-            card.onclick = () => openDetail(p.id);
-            container.appendChild(card);
-        });
-    }
-    
-    switchSection('categoryProductsSection');
 }
 
 async function buyNowFromDetail() {
@@ -825,6 +717,7 @@ async function placeBuyNowOrder() {
             price: currentDetailProduct.disc_price || currentDetailProduct.price,
             img: currentDetailProduct.img
         }];
+        // Check & decrease stock safely
         for (let item of items) {
             const { data: prod, error: stockErr } = await _supabase
                 .from('products')
@@ -922,11 +815,11 @@ async function fetchOrders() {
       }
     } else {
       if(isAdmin) {
-          adminOrderSelect.innerHTML = '<option value="">Select Order</option>' + list.map(o => `<option value="\( {o.order_id}"> \){o.order_id} - ${o.customer_name}</option>`).join('');
+          adminOrderSelect.innerHTML = '<option value="">Select Order</option>' + list.map(o => `<option value="${o.order_id}">${o.order_id} - ${o.customer_name}</option>`).join('');
       }
       userOrdersList.innerHTML = list.map(o => `
           <div style="background:white; padding:15px; border-radius:10px; margin-bottom:10px; border-left:5px solid var(--primary)">
-              <span class="status-badge \( {o.status}"> \){o.status}</span>
+              <span class="status-badge ${o.status}">${o.status}</span>
               <b>ID: ${o.order_id}</b><br>
               <small>Total: Rs ${o.total_price} | Payment: ${o.trx_id ? 'JazzCash' : 'COD'}</small>
               <div>Items: ${o.items ? o.items.map(i => i.name).join(', ') : 'N/A'}</div>
@@ -940,7 +833,7 @@ async function fetchOrders() {
                       <option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option>
                   </select>
               ` : ''}
-              \( {!isAdmin && (o.status === 'Delivered' || o.status === 'Cancelled') ? `<button class="btn-small btn-delete" onclick="deleteUserOrder(' \){o.order_id}')">Delete</button>` : ''}
+              ${!isAdmin && (o.status === 'Delivered' || o.status === 'Cancelled') ? `<button class="btn-small btn-delete" onclick="deleteUserOrder('${o.order_id}')">Delete</button>` : ''}
           </div>`).join('');
     }
 }
@@ -955,12 +848,12 @@ async function deleteUserOrder(id) {
 async function fetchProofs() {
     const { data } = await _supabase.from('orders').select('*').not('trx_id', 'is', null);
     if(data) {
-        adminProofSelect.innerHTML = '<option value="">Select Proof</option>' + data.map(p => `<option value="\( {p.order_id}"> \){p.order_id}</option>`).join('');
+        adminProofSelect.innerHTML = '<option value="">Select Proof</option>' + data.map(p => `<option value="${p.order_id}">${p.order_id}</option>`).join('');
         proofsList.innerHTML = data.map(p => `
             <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px;">
                 <b>Order ${p.order_id}</b> - Trx ${p.trx_id}<br>
                 <img src="${p.trx_img}" style="width:100px; border-radius:8px;"><br>
-                <button class="btn-small btn-order" onclick="whatsappTo('\( {p.customer_phone}', ' \){p.order_id}')">Confirm on WA</button>
+                <button class="btn-small btn-order" onclick="whatsappTo('${p.customer_phone}', '${p.order_id}')">Confirm on WA</button>
             </div>
         `).join('');
     }
@@ -1035,10 +928,7 @@ async function assignCategory(){
 function switchSection(id, btn) { 
     document.querySelectorAll('.section').forEach(s => s.style.display = 'none'); 
     document.getElementById(id).style.display = 'block'; 
-    if(btn) { 
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active')); 
-        btn.classList.add('nav-active'); 
-    }
+    if(btn) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active')); btn.classList.add('nav-active'); }
     if(id === 'cartSection') renderCart();
 }
 
@@ -1112,7 +1002,7 @@ function showCheckoutForm() {
     document.getElementById('orderAddress').value = userSavedAddress;
     checkLayyahCity();
     document.getElementById('checkoutForm').style.display = 'block';
-    currentDetailProduct = { items: selected };
+    currentDetailProduct = { items: selected }; // Temp for placeOrder
 }
 
 async function placeOrder() {
@@ -1137,6 +1027,7 @@ async function placeOrder() {
         const items = currentDetailProduct.items || [];
         if (items.length === 0) throw new Error("No items selected");
 
+        // Check & decrease stock safely
         for (let item of items) {
             const { data: prod, error: stockErr } = await _supabase
                 .from('products')
@@ -1195,22 +1086,9 @@ async function placeOrder() {
     }
 }
 
-function showToast(m) { 
-    customToast.innerText = m; 
-    customToast.style.display = 'block'; 
-    setTimeout(()=>customToast.style.display='none',3000); 
-}
-
-function userLogout() { 
-    localStorage.removeItem('helloShopUser'); 
-    localStorage.removeItem('cart'); 
-    location.reload(); 
-}
-
-function toggleChat() { 
-    chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex'; 
-}
-
+function showToast(m) { customToast.innerText = m; customToast.style.display = 'block'; setTimeout(()=>customToast.style.display='none',3000); }
+function userLogout() { localStorage.removeItem('helloShopUser'); localStorage.removeItem('cart'); location.reload(); }
+function toggleChat() { chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex'; }
 async function sendMsg() { 
     if (chatInput.value.trim() === '') return;
     let payload = { sender: isAdmin ? ADMIN_EMAIL : currentUser.email, text: chatInput.value };
@@ -1220,29 +1098,20 @@ async function sendMsg() {
     await _supabase.from('messages').insert([payload]); 
     chatInput.value = ""; 
 }
-
-function listenChat() { 
-    _supabase.channel('any').on('postgres_changes', { event: 'INSERT', table: 'messages' }, () => { 
-        renderMessages(); 
-        if(isAdmin) loadChatUsers(); 
-    }).subscribe(); 
-    if(isAdmin) loadChatUsers(); 
-    renderMessages(); 
-}
-
+function listenChat() { _supabase.channel('any').on('postgres_changes', { event: 'INSERT', table: 'messages' }, () => { renderMessages(); if(isAdmin) loadChatUsers(); }).subscribe(); if(isAdmin) loadChatUsers(); renderMessages(); }
 async function loadChatUsers(){
   const {data} = await _supabase.from('messages').select('user_id').neq('user_id', null);
   if(data) {
     const users = [...new Set(data.map(d => d.user_id))];
     const {data:profs} = await _supabase.from('profiles').select('email, full_name').in('email', users);
     const userMap = profs.reduce((acc,p) => {acc[p.email] = p.full_name || p.email; return acc;}, {});
-    document.getElementById('chatUserSelect').innerHTML = '<option value="">Select User</option>' + users.map(u => `<option value="\( {u}"> \){userMap[u]}</option>`).join('');
+    document.getElementById('chatUserSelect').innerHTML = '<option value="">Select User</option>' + users.map(u => `<option value="${u}">${userMap[u]}</option>`).join('');
   }
 }
-
 async function renderMessages() {
     const { data: messages } = await _supabase.from('messages').select('*').order('created_at', {ascending: true});
     if(!messages) return;
+    // Fetch profiles for unique senders
     const uniqueSenders = [...new Set(messages.map(m => m.sender))].filter(s => s !== ADMIN_EMAIL);
     if (uniqueSenders.length > 0) {
         const { data: profiles } = await _supabase.from('profiles').select('email, full_name, profile_pic').in('email', uniqueSenders);
@@ -1277,10 +1146,7 @@ async function renderMessages() {
     }).join('');
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
-function searchProducts() { 
-    renderHomeProducts(allProducts.filter(p => p.name.toLowerCase().includes(searchBar.value.toLowerCase()))); 
-}
+function searchProducts() { renderHomeProducts(allProducts.filter(p => p.name.toLowerCase().includes(searchBar.value.toLowerCase()))); }
 </script>
 </body>
 </html>
