@@ -88,6 +88,11 @@
         .popup-content { background: #f4f7f6; padding: 20px; border-radius: 12px; text-align: center; width: 80%; max-width: 300px; }
         .popup-content h2 { color: var(--primary); margin-bottom: 10px; }
         .popup-content button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+
+        #categoryMenu h3 { color: var(--primary); }
+        #categoryMenu ul { list-style: none; padding: 0; }
+        #categoryMenu li { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-weight: 500; }
+        #categoryMenu li:hover { background: var(--primary); color: white; }
     </style>
 </head>
 <body>
@@ -109,11 +114,11 @@
   <span onclick="toggleMenu()" style="float:right; cursor:pointer">✖</span>
   <h3>Categories</h3>
   <ul>
-    <li>Electronics (locked)</li>
-    <li>Fashion (locked)</li>
-    <li>Books (locked)</li>
-    <li>Home (locked)</li>
-    <li>Beauty (locked)</li>
+    <li onclick="openCategory('electronics')">Electronics</li>
+    <li onclick="openCategory('fashion')">Fashion</li>
+    <li onclick="openCategory('books')">Books</li>
+    <li onclick="openCategory('home')">Home</li>
+    <li onclick="openCategory('beauty')">Beauty</li>
   </ul>
 </div>
 
@@ -170,6 +175,31 @@
     <div id="homeSection" class="section active-section">
         <div class="search-area"><input type="text" id="searchBar" placeholder="Search..." onkeyup="searchProducts()"></div>
         <div id="products">Loading...</div>
+    </div>
+
+    <div id="electronicsSection" class="section">
+        <div class="search-area"><input type="text" id="electronicsSearch" placeholder="Search..." onkeyup="searchCategory('electronics')"></div>
+        <div id="electronicsProducts">Loading...</div>
+    </div>
+
+    <div id="fashionSection" class="section">
+        <div class="search-area"><input type="text" id="fashionSearch" placeholder="Search..." onkeyup="searchCategory('fashion')"></div>
+        <div id="fashionProducts">Loading...</div>
+    </div>
+
+    <div id="booksSection" class="section">
+        <div class="search-area"><input type="text" id="booksSearch" placeholder="Search..." onkeyup="searchCategory('books')"></div>
+        <div id="booksProducts">Loading...</div>
+    </div>
+
+    <div id="homeSectionCategory" class="section">
+        <div class="search-area"><input type="text" id="homeSearch" placeholder="Search..." onkeyup="searchCategory('home')"></div>
+        <div id="homeProducts">Loading...</div>
+    </div>
+
+    <div id="beautySection" class="section">
+        <div class="search-area"><input type="text" id="beautySearch" placeholder="Search..." onkeyup="searchCategory('beauty')"></div>
+        <div id="beautyProducts">Loading...</div>
     </div>
 
     <div id="adminPanelSection" class="section">
@@ -602,8 +632,14 @@ async function uploadProfilePic(input) {
 
 async function loadProducts() {
     loaderOverlay.style.display = 'flex';
-    const { data } = await _supabase.from('products').select('*').order('id', {ascending: false});
-    allProducts = data || [];
+    const { data: productsData } = await _supabase.from('products').select('*').order('id', {ascending: false});
+    const productIds = productsData.map(p => p.id);
+    const { data: detailsData } = await _supabase.from('product_details').select('product_id, discount_price').in('product_id', productIds);
+    allProducts = productsData.map(p => {
+        const det = detailsData.find(d => d.product_id === p.id);
+        p.disc_price = det ? det.discount_price : null;
+        return p;
+    });
     renderHomeProducts(allProducts);
     if(isAdmin){
       document.getElementById('assignProductSelect').innerHTML = '<option value="">Select Product</option>' + allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
@@ -616,9 +652,24 @@ function renderHomeProducts(list) {
         <div class="card" onclick="openDetail(${p.id})">
             <img src="${p.img}">
             <div class="card-info">
-                <h4>${p.name}</h4>
-                <span class="price-tag">Rs ${p.price}</span>
-                <div style="font-size:10px; color:#888;">Stock: ${p.stock || 0}</div>
+                <h4 style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.name}</h4>
+                <span ${p.disc_price ? 'class="old-price"' : 'class="price-tag"'} >Rs ${p.price}</span>${p.disc_price ? '<span class="new-price">Rs ' + p.disc_price + '</span>' : ''}
+                <div style="font-size:10px; color:#888;">Quantity: ${p.stock || 0}</div>
+            </div>
+            <div class="btn-group">
+                ${isAdmin ? `<button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteProduct(${p.id})">DELETE</button>` : ''}
+            </div>
+        </div>`).join('');
+}
+
+function renderCategoryProducts(cat, list) {
+    document.getElementById(cat + 'Products').innerHTML = list.map(p => `
+        <div class="card" onclick="openDetail(${p.id})">
+            <img src="${p.img}">
+            <div class="card-info">
+                <h4 style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.name}</h4>
+                <span ${p.disc_price ? 'class="old-price"' : 'class="price-tag"'} >Rs ${p.price}</span>${p.disc_price ? '<span class="new-price">Rs ' + p.disc_price + '</span>' : ''}
+                <div style="font-size:10px; color:#888;">Quantity: ${p.stock || 0}</div>
             </div>
             <div class="btn-group">
                 ${isAdmin ? `<button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteProduct(${p.id})">DELETE</button>` : ''}
@@ -932,6 +983,13 @@ function switchSection(id, btn) {
     if(id === 'cartSection') renderCart();
 }
 
+function openCategory(cat) {
+    toggleMenu();
+    switchSection(cat + 'Section');
+    const list = allProducts.filter(p => p.category === cat);
+    renderCategoryProducts(cat, list);
+}
+
 function addToCart(buyNow = false) {
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
     if(cart.find(c => c.id === currentDetailProduct.id)) return showToast("Already in cart!");
@@ -1147,6 +1205,12 @@ async function renderMessages() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 function searchProducts() { renderHomeProducts(allProducts.filter(p => p.name.toLowerCase().includes(searchBar.value.toLowerCase()))); }
+
+function searchCategory(cat) {
+    const searchInput = document.getElementById(cat + 'Search').value.toLowerCase();
+    const list = allProducts.filter(p => p.category === cat && p.name.toLowerCase().includes(searchInput));
+    renderCategoryProducts(cat, list);
+}
 </script>
 </body>
 </html>
