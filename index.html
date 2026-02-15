@@ -20,6 +20,7 @@
         .search-area { background: white; padding: 10px; position: sticky; top: 55px; z-index: 999; border-bottom: 1px solid #eee; }
         #searchBar { width: 90%; padding: 10px 15px; display: block; margin: 0 auto; border: 1px solid #ddd; border-radius: 25px; outline: none; }
         #products { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+        #electronicsProducts, #fashionProducts, #booksProducts, #homeProducts, #beautyProducts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
         .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; cursor: pointer; }
         .card img { width: 100%; height: 140px; object-fit: cover; }
         .card-info { padding: 10px; }
@@ -28,6 +29,7 @@
         .btn-small { border: none; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; }
         .btn-order { background: var(--primary); color: white; }
         .btn-delete { background: var(--red); color: white; }
+        .btn-share { background: var(--blue); color: white; }
         .section { display: none; padding: 15px; }
         .active-section { display: block; }
         input, select, textarea { width: 92%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; box-sizing: border-box; }
@@ -212,6 +214,14 @@
             <input type="number" id="pStock" placeholder="Quantity (Stock)">
             <input type="file" id="pImages" accept="image/*" multiple>
             <input type="file" id="pVideo" accept="video/*">
+            <label>Sizes (multi-select)</label>
+            <select multiple id="pSizes">
+                <option>S</option>
+                <option>M</option>
+                <option>L</option>
+                <option>XL</option>
+                <option>XXL</option>
+            </select>
             <button class="btn-main" onclick="addNewProduct()">Add Product</button>
         </div>
         <div style="margin-top:20px; background: white; padding: 15px; border-radius: 12px; border:1px solid #ddd;">
@@ -241,6 +251,14 @@
         <input type="file" id="editPImages" accept="image/*" multiple>
         <div id="currentVideoPreview"></div>
         <input type="file" id="editPVideo" accept="video/*">
+        <div>Current Sizes: <span id="currentSizes"></span></div>
+        <select multiple id="editPSizes">
+            <option>S</option>
+            <option>M</option>
+            <option>L</option>
+            <option>XL</option>
+            <option>XXL</option>
+        </select>
         <button class="btn-main" onclick="saveEditedProduct()">Save Changes</button>
     </div>
 
@@ -252,6 +270,7 @@
         <h2 id="detailTitle"></h2>
         <div><span id="detailOldPrice" class="old-price"></span><span id="detailNewPrice" class="new-price"></span></div>
         <p id="detailDescription"></p>
+        <div id="sizeSelectContainer"></div>
         <div id="detailActionBtn"></div>
     </div>
 
@@ -388,6 +407,7 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ADMIN_EMAIL = "ligerplaz@gmail.com";
 let currentUser = null, isAdmin = false, allProducts = [], currentDetailProduct = null, userSavedAddress = "", userSavedName = "", editingProduct = null;
 let confirmCallback = null, userProfiles = {};
+let prodId = null;
 
 function toggleMenu(){ document.getElementById('categoryMenu').style.display = document.getElementById('categoryMenu').style.display === 'block' ? 'none' : 'block'; }
 
@@ -523,6 +543,8 @@ async function handleSignup() {
 }
 
 window.onload = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    prodId = urlParams.get('product');
     if(window.location.hash.includes('type=recovery')) {
         document.getElementById('authPage').style.display = 'none';
         document.getElementById('resetPage').style.display = 'block';
@@ -552,7 +574,14 @@ function setupApp(email) {
         document.getElementById('userNameBook').style.display = 'block';
         document.getElementById('userAddressBook').style.display = 'block';
     }
-    loadProducts(); fetchOrders(); listenChat(); loadProfileData(); renderCart();
+    loadProducts(); 
+    fetchOrders(); 
+    listenChat(); 
+    loadProfileData(); 
+    renderCart();
+    if(prodId){
+        openDetail(parseInt(prodId));
+    }
 }
 
 async function loadProfileData() {
@@ -634,10 +663,11 @@ async function loadProducts() {
     loaderOverlay.style.display = 'flex';
     const { data: productsData } = await _supabase.from('products').select('*').order('id', {ascending: false});
     const productIds = productsData.map(p => p.id);
-    const { data: detailsData } = await _supabase.from('product_details').select('product_id, discount_price').in('product_id', productIds);
+    const { data: detailsData } = await _supabase.from('product_details').select('product_id, discount_price, sizes').in('product_id', productIds);
     allProducts = productsData.map(p => {
         const det = detailsData.find(d => d.product_id === p.id);
         p.disc_price = det ? det.discount_price : null;
+        p.sizes = det ? det.sizes : [];
         return p;
     });
     renderHomeProducts(allProducts);
@@ -657,6 +687,7 @@ function renderHomeProducts(list) {
                 <div style="font-size:10px; color:#888;">Quantity: ${p.stock || 0}</div>
             </div>
             <div class="btn-group">
+                <button class="btn-small btn-share" onclick="event.stopPropagation(); shareProduct(${p.id})">Share</button>
                 ${isAdmin ? `<button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteProduct(${p.id})">DELETE</button>` : ''}
             </div>
         </div>`).join('');
@@ -672,6 +703,7 @@ function renderCategoryProducts(cat, list) {
                 <div style="font-size:10px; color:#888;">Quantity: ${p.stock || 0}</div>
             </div>
             <div class="btn-group">
+                <button class="btn-small btn-share" onclick="event.stopPropagation(); shareProduct(${p.id})">Share</button>
                 ${isAdmin ? `<button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteProduct(${p.id})">DELETE</button>` : ''}
             </div>
         </div>`).join('');
@@ -688,6 +720,7 @@ async function openDetail(id) {
         currentDetailProduct.disc_price = data.discount_price;
         currentDetailProduct.images = data.images;
         currentDetailProduct.video = data.video;
+        currentDetailProduct.sizes = data.sizes;
     }
     document.getElementById('detailTitle').innerText = p.name;
     document.getElementById('detailOldPrice').innerText = "Rs " + p.price;
@@ -699,6 +732,7 @@ async function openDetail(id) {
     const stockLabel = document.getElementById('stockInfo');
     if(stock > 0) { stockLabel.innerText = `${stock} items in stock`; stockLabel.className = 'stock-badge'; } 
     else { stockLabel.innerText = `Out of Stock`; stockLabel.className = 'stock-badge out-of-stock'; }
+    document.getElementById('sizeSelectContainer').innerHTML = currentDetailProduct.sizes?.length > 0 ? `<label style="font-weight:bold;">Select Size</label><select id="detailSize" style="margin-bottom:10px;"><option value="">Choose size</option>${currentDetailProduct.sizes.map(s=>`<option value="${s}">${s}</option>`).join('')}</select>` : '';
     const actionBtn = document.getElementById('detailActionBtn');
     if(isAdmin) {
         actionBtn.innerHTML = `
@@ -716,18 +750,22 @@ async function openDetail(id) {
 
 async function buyNowFromDetail() {
     if (currentDetailProduct.stock <= 0) return showToast("Out of stock!");
+    const sizeElem = document.getElementById('detailSize');
+    const size = sizeElem ? sizeElem.value : '';
+    if(currentDetailProduct.sizes?.length > 0 && !size) return showToast("Please select a size!");
     const item = {
         id: currentDetailProduct.id,
         name: currentDetailProduct.name,
         price: currentDetailProduct.disc_price || currentDetailProduct.price,
-        img: currentDetailProduct.img
+        img: currentDetailProduct.img,
+        size: size
     };
     document.getElementById('buyNowItem').innerHTML = `
         <div class="cart-item">
             <img src="${item.img}">
             <div>
                 <b>${item.name}</b><br>
-                Rs ${item.price}
+                Rs ${item.price}<br>Size: ${item.size || 'N/A'}
             </div>
         </div>
     `;
@@ -766,7 +804,8 @@ async function placeBuyNowOrder() {
             id: currentDetailProduct.id,
             name: currentDetailProduct.name,
             price: currentDetailProduct.disc_price || currentDetailProduct.price,
-            img: currentDetailProduct.img
+            img: currentDetailProduct.img,
+            size: currentDetailProduct.size
         }];
         for (let item of items) {
             const { data: prod, error: stockErr } = await _supabase
@@ -833,6 +872,7 @@ async function editProduct(id) {
     document.getElementById('editPStock').value = editingProduct.stock;
     document.getElementById('currentImagesPreview').innerHTML = (editingProduct.images || [editingProduct.img]).map(img => `<img src="${img}" class="preview-img">`).join('');
     document.getElementById('currentVideoPreview').innerHTML = editingProduct.video ? `<video controls src="${editingProduct.video}" style="width:100%; height:150px;"></video>` : 'No video';
+    document.getElementById('currentSizes').innerText = editingProduct.sizes?.join(', ') || 'None';
     switchSection('editProductSection');
 }
 
@@ -846,8 +886,9 @@ async function saveEditedProduct() {
     }
     let video = editingProduct.video;
     if(editPVideo.files[0]) video = await toBase64(editPVideo.files[0]);
+    let sizes = Array.from(document.getElementById('editPSizes').selectedOptions).map(o => o.value);
     await _supabase.from('products').update({ name: editPName.value, price: editPBasePrice.value, stock: parseInt(editPStock.value), img: imgs[0] || '' }).eq('id', editingProduct.id);
-    await _supabase.from('product_details').upsert([{ product_id: editingProduct.id, description: editPDesc.value, discount_price: editPDiscPrice.value, images: imgs, video: video }], { onConflict: 'product_id' });
+    await _supabase.from('product_details').upsert([{ product_id: editingProduct.id, description: editPDesc.value, discount_price: editPDiscPrice.value, images: imgs, video: video, sizes: sizes }], { onConflict: 'product_id' });
     loaderOverlay.style.display = 'none';
     showToast("Product Updated!");
     loadProducts();
@@ -872,7 +913,7 @@ async function fetchOrders() {
               <span class="status-badge ${o.status}">${o.status}</span>
               <b>ID: ${o.order_id}</b><br>
               <small>Total: Rs ${o.total_price} | Payment: ${o.trx_id ? 'JazzCash' : 'COD'}</small>
-              <div>Items: ${o.items ? o.items.map(i => i.name).join(', ') : 'N/A'}</div>
+              <div>Items: ${o.items ? o.items.map(i => `${i.name} (${i.size || ''})`).join(', ') : 'N/A'}</div>
               ${isAdmin ? `
                   <div>👤 ${o.customer_name} | 📞 ${o.customer_phone}<br>📍 ${o.address}</div>
                   <select style="margin-top:10px" onchange="updateStatus('${o.order_id}', this.value)">
@@ -925,8 +966,9 @@ async function addNewProduct() {
     loaderOverlay.style.display = 'flex';
     const imgs = await Promise.all([...pImages.files].map(toBase64));
     const video = pVideo.files[0] ? await toBase64(pVideo.files[0]) : null;
+    const sizes = Array.from(document.getElementById('pSizes').selectedOptions).map(o => o.value);
     const { data: prod } = await _supabase.from('products').insert([{ name: pName.value, price: pBasePrice.value, stock: parseInt(pStock.value), img: imgs[0] || '' }]).select().single(); 
-    if(prod) await _supabase.from('product_details').insert([{ product_id: prod.id, description: pDesc.value, discount_price: pDiscPrice.value, images: imgs, video: video }]);
+    if(prod) await _supabase.from('product_details').insert([{ product_id: prod.id, description: pDesc.value, discount_price: pDiscPrice.value, images: imgs, video: video, sizes: sizes }]);
     loaderOverlay.style.display = 'none'; 
     showToast("Product Added!");
     loadProducts(); 
@@ -989,14 +1031,23 @@ function openCategory(cat) {
     renderCategoryProducts(cat, list);
 }
 
+function shareProduct(id) {
+    const link = `${window.location.origin}${window.location.pathname}?product=${id}`;
+    navigator.clipboard.writeText(link).then(() => showToast("Link copied to clipboard!"));
+}
+
 function addToCart(buyNow = false) {
+    const sizeElem = document.getElementById('detailSize');
+    const size = sizeElem ? sizeElem.value : '';
+    if(currentDetailProduct.sizes?.length > 0 && !size) return showToast("Please select a size!");
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
     if(cart.find(c => c.id === currentDetailProduct.id)) return showToast("Already in cart!");
     const item = {
         id: currentDetailProduct.id,
         name: currentDetailProduct.name,
         price: currentDetailProduct.disc_price || currentDetailProduct.price,
-        img: currentDetailProduct.img
+        img: currentDetailProduct.img,
+        size: size
     };
     cart.push(item);
     localStorage.setItem('cart', JSON.stringify(cart));
@@ -1021,7 +1072,7 @@ function renderCart() {
             <img src="${c.img}">
             <div>
                 <b>${c.name}</b><br>
-                Rs ${c.price}
+                Rs ${c.price}<br>Size: ${c.size || 'N/A'}
             </div>
         </div>
     `).join('');
