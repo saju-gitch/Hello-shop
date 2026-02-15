@@ -103,12 +103,27 @@
     </div>
 </div>
 
-<header>HELLO SHOP</header>
+<header>HELLO SHOP<div id="hamburger" style="position:absolute; left:10px; top:15px; font-size:24px; cursor:pointer;" onclick="toggleMenu()">☰</div></header>
+
+<div id="categoryMenu" style="position:fixed; top:0; left:0; width:70%; height:100%; background:white; z-index:2000; display:none; padding:20px; overflow:auto;">
+  <span onclick="toggleMenu()" style="float:right; cursor:pointer">✖</span>
+  <h3>Categories</h3>
+  <ul>
+    <li>Electronics (locked)</li>
+    <li>Fashion (locked)</li>
+    <li>Books (locked)</li>
+    <li>Home (locked)</li>
+    <li>Beauty (locked)</li>
+  </ul>
+</div>
 
 <div id="chatBtn" onclick="toggleChat()">💬</div>
 <div id="chatWindow">
     <div style="background:var(--primary); color:white; padding:12px; font-weight:bold; display:flex; justify-content:space-between;">
         <span>Support</span> <span onclick="toggleChat()" style="cursor:pointer">✖</span>
+    </div>
+    <div id="chatUserSelector" style="padding:10px; display:none;">
+      <select id="chatUserSelect" onchange="renderMessages()"><option value="">Select User</option></select>
     </div>
     <div id="chatMessages"></div>
     <div style="display:flex; padding:10px; border-top:1px solid #eee;">
@@ -168,6 +183,19 @@
             <input type="file" id="pImages" accept="image/*" multiple>
             <input type="file" id="pVideo" accept="video/*">
             <button class="btn-main" onclick="addNewProduct()">Add Product</button>
+        </div>
+        <div style="margin-top:20px; background: white; padding: 15px; border-radius: 12px; border:1px solid #ddd;">
+            <h3 style="margin-top:0; color:var(--primary)">Assign Category</h3>
+            <select id="assignProductSelect"><option value="">Select Product</option></select>
+            <select id="assignCategorySelect">
+              <option value="">Select Category</option>
+              <option value="electronics">Electronics</option>
+              <option value="fashion">Fashion</option>
+              <option value="books">Books</option>
+              <option value="home">Home</option>
+              <option value="beauty">Beauty</option>
+            </select>
+            <button class="btn-main" onclick="assignCategory()">Assign</button>
         </div>
     </div>
 
@@ -239,6 +267,11 @@
                 <label style="font-size:12px; font-weight:bold;">Payment Screenshot</label>
                 <input type="file" id="orderTrxImg" accept="image/*" style="font-size:11px;">
             </div>
+            <div id="priceSummary" style="background:white; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:10px;">
+                <p>Product Price: Rs <span id="productPrice">0</span></p>
+                <p>Delivery Charges: Rs 150</p>
+                <p><b>Total Price: Rs <span id="totalPrice">0</span></b></p>
+            </div>
             
             <button class="btn-main" style="background:var(--green-tick); margin-top:10px;" onclick="placeOrder()">Confirm Order (Rs <span id="cartTotal">0</span>)</button>
         </div>
@@ -270,6 +303,11 @@
             <label style="font-size:12px; font-weight:bold;">Payment Screenshot</label>
             <input type="file" id="buyNowOrderTrxImg" accept="image/*" style="font-size:11px;">
         </div>
+        <div id="buyNowPriceSummary" style="background:white; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:10px;">
+            <p>Product Price: Rs <span id="buyNowProductPrice">0</span></p>
+            <p>Delivery Charges: Rs 150</p>
+            <p><b>Total Price: Rs <span id="buyNowTotalPrice">0</span></b></p>
+        </div>
         
         <button class="btn-main" style="background:var(--green-tick); margin-top:10px;" onclick="placeBuyNowOrder()">Confirm Order (Rs <span id="buyNowTotal">0</span>)</button>
     </div>
@@ -283,7 +321,7 @@
             <div id="userNameBook" style="margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd; display:none;">
                 <label style="font-weight:bold; font-size:14px;">My Full Name</label>
                 <input type="text" id="profileNameInput" placeholder="Enter your full name...">
-                <button class="btn-main" style="font-size:12px; padding:8px;" onclick="saveUserName()">Save Name</button>
+                <button class="btn-main" style="font-size:12px; padding:8px;" onclick="saveUserName()" id="saveNameBtn">Save Name</button>
                 <button id="editNameBtn" class="btn-main" style="display:none; font-size:12px; padding:8px; background:var(--blue);" onclick="editUserName()">Edit Name</button>
             </div>
             <div id="userAddressBook" style="margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd; display:none;">
@@ -320,6 +358,8 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ADMIN_EMAIL = "ligerplaz@gmail.com";
 let currentUser = null, isAdmin = false, allProducts = [], currentDetailProduct = null, userSavedAddress = "", userSavedName = "", editingProduct = null;
 let confirmCallback = null, userProfiles = {};
+
+function toggleMenu(){ document.getElementById('categoryMenu').style.display = document.getElementById('categoryMenu').style.display === 'block' ? 'none' : 'block'; }
 
 function togglePass(id) {
     const p = document.getElementById(id);
@@ -475,6 +515,7 @@ function setupApp(email) {
         document.getElementById('adminPaymentProofs').style.display = 'block';
         document.getElementById('adminOrderHeader').style.display = 'flex';
         document.getElementById('userOrderTitle').style.display = 'none';
+        document.getElementById('chatUserSelector').style.display = 'block';
         fetchProofs(); // Removed fetchVisitors
     } else {
         document.getElementById('displayEmail').innerText = email;
@@ -564,6 +605,9 @@ async function loadProducts() {
     const { data } = await _supabase.from('products').select('*').order('id', {ascending: false});
     allProducts = data || [];
     renderHomeProducts(allProducts);
+    if(isAdmin){
+      document.getElementById('assignProductSelect').innerHTML = '<option value="">Select Product</option>' + allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
     loaderOverlay.style.display = 'none';
 }
 
@@ -636,7 +680,11 @@ async function buyNowFromDetail() {
             </div>
         </div>
     `;
-    document.getElementById('buyNowTotal').innerText = item.price;
+    const productTotal = item.price;
+    const total = productTotal + 150;
+    document.getElementById('buyNowProductPrice').innerText = productTotal;
+    document.getElementById('buyNowTotalPrice').innerText = total;
+    document.getElementById('buyNowTotal').innerText = total;
     document.getElementById('buyNowOrderName').value = userSavedName;
     document.getElementById('buyNowOrderAddress').value = userSavedAddress;
     checkBuyNowLayyahCity();
@@ -696,7 +744,7 @@ async function placeBuyNowOrder() {
         }
 
         const orderId = 'ORD' + Math.floor(100000 + Math.random() * 900000);
-        const total = items.reduce((sum, i) => sum + i.price, 0);
+        const total = items.reduce((sum, i) => sum + i.price, 0) + 150;
 
         const { error: orderErr } = await _supabase.from('orders').insert([{ 
             order_id: orderId,
@@ -759,27 +807,35 @@ async function saveEditedProduct() {
 async function fetchOrders() {
     const { data } = await _supabase.from('orders').select('*').order('id', {ascending: false});
     const list = isAdmin ? (data || []) : (data ? data.filter(o => o.user_email === currentUser.email) : []);
-    if(isAdmin) {
-        adminOrderSelect.innerHTML = '<option value="">Select Order</option>' + list.map(o => `<option value="${o.order_id}">${o.order_id} - ${o.customer_name}</option>`).join('');
+    if(list.length === 0){
+      if(isAdmin){
+        userOrdersList.innerHTML = '<h3>NO CUSTOMER ORDER</h3>';
+      } else {
+        userOrdersList.innerHTML = '<h3>YOU HAVE NOT PLACED ANY ORDER YET</h3><button class="btn-main" onclick="switchSection(\'homeSection\')">Place Order</button>';
+      }
+    } else {
+      if(isAdmin) {
+          adminOrderSelect.innerHTML = '<option value="">Select Order</option>' + list.map(o => `<option value="${o.order_id}">${o.order_id} - ${o.customer_name}</option>`).join('');
+      }
+      userOrdersList.innerHTML = list.map(o => `
+          <div style="background:white; padding:15px; border-radius:10px; margin-bottom:10px; border-left:5px solid var(--primary)">
+              <span class="status-badge ${o.status}">${o.status}</span>
+              <b>ID: ${o.order_id}</b><br>
+              <small>Total: Rs ${o.total_price} | Payment: ${o.trx_id ? 'JazzCash' : 'COD'}</small>
+              <div>Items: ${o.items ? o.items.map(i => i.name).join(', ') : 'N/A'}</div>
+              ${isAdmin ? `
+                  <div>👤 ${o.customer_name} | 📞 ${o.customer_phone}<br>📍 ${o.address}</div>
+                  <select style="margin-top:10px" onchange="updateStatus('${o.order_id}', this.value)">
+                      <option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option>
+                      <option value="Processing" ${o.status==='Processing'?'selected':''}>Processing</option>
+                      <option value="Shipped" ${o.status==='Shipped'?'selected':''}>Shipped</option>
+                      <option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option>
+                      <option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option>
+                  </select>
+              ` : ''}
+              ${!isAdmin && (o.status === 'Delivered' || o.status === 'Cancelled') ? `<button class="btn-small btn-delete" onclick="deleteUserOrder('${o.order_id}')">Delete</button>` : ''}
+          </div>`).join('');
     }
-    userOrdersList.innerHTML = list.map(o => `
-        <div style="background:white; padding:15px; border-radius:10px; margin-bottom:10px; border-left:5px solid var(--primary)">
-            <span class="status-badge ${o.status}">${o.status}</span>
-            <b>ID: ${o.order_id}</b><br>
-            <small>Total: Rs ${o.total_price} | Payment: ${o.trx_id ? 'JazzCash' : 'COD'}</small>
-            <div>Items: ${o.items ? o.items.map(i => i.name).join(', ') : 'N/A'}</div>
-            ${isAdmin ? `
-                <div>👤 ${o.customer_name} | 📞 ${o.customer_phone}<br>📍 ${o.address}</div>
-                <select style="margin-top:10px" onchange="updateStatus('${o.order_id}', this.value)">
-                    <option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option>
-                    <option value="Processing" ${o.status==='Processing'?'selected':''}>Processing</option>
-                    <option value="Shipped" ${o.status==='Shipped'?'selected':''}>Shipped</option>
-                    <option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option>
-                    <option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option>
-                </select>
-            ` : ''}
-            ${!isAdmin && (o.status === 'Delivered' || o.status === 'Cancelled') ? `<button class="btn-small btn-delete" onclick="deleteUserOrder('${o.order_id}')">Delete</button>` : ''}
-        </div>`).join('');
 }
 
 async function deleteUserOrder(id) {
@@ -859,6 +915,16 @@ async function deleteSelectedProof() {
     });
 }
 
+async function assignCategory(){
+  const pid = document.getElementById('assignProductSelect').value;
+  const cat = document.getElementById('assignCategorySelect').value;
+  if(!pid || !cat) return showToast("Select product and category");
+  loaderOverlay.style.display = 'flex';
+  await _supabase.from('products').update({category: cat}).eq('id', pid);
+  loaderOverlay.style.display = 'none';
+  showToast("Category Assigned!");
+}
+
 function switchSection(id, btn) { 
     document.querySelectorAll('.section').forEach(s => s.style.display = 'none'); 
     document.getElementById(id).style.display = 'block'; 
@@ -927,7 +993,10 @@ function showCheckoutForm() {
     const checked = [...document.querySelectorAll('#cartItems input[type="checkbox"]:checked')].map(ch => ch.dataset.id);
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const selected = cart.filter(c => checked.includes(c.id.toString()));
-    const total = selected.reduce((sum, s) => sum + s.price, 0);
+    const productTotal = selected.reduce((sum, s) => sum + s.price, 0);
+    const total = productTotal + 150;
+    document.getElementById('productPrice').innerText = productTotal;
+    document.getElementById('totalPrice').innerText = total;
     document.getElementById('cartTotal').innerText = total;
     document.getElementById('orderName').value = userSavedName;
     document.getElementById('orderAddress').value = userSavedAddress;
@@ -985,7 +1054,7 @@ async function placeOrder() {
         }
 
         const orderId = 'ORD' + Math.floor(100000 + Math.random() * 900000);
-        const total = items.reduce((sum, i) => sum + i.price, 0);
+        const total = items.reduce((sum, i) => sum + i.price, 0) + 150;
 
         const { error: orderErr } = await _supabase.from('orders').insert([{ 
             order_id: orderId,
@@ -1022,10 +1091,23 @@ function userLogout() { localStorage.removeItem('helloShopUser'); localStorage.r
 function toggleChat() { chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex'; }
 async function sendMsg() { 
     if (chatInput.value.trim() === '') return;
-    await _supabase.from('messages').insert([{ sender: isAdmin ? ADMIN_EMAIL : currentUser.email, text: chatInput.value }]); 
+    let payload = { sender: isAdmin ? ADMIN_EMAIL : currentUser.email, text: chatInput.value };
+    if(!isAdmin) payload.user_id = currentUser.email;
+    else if(document.getElementById('chatUserSelect').value) payload.user_id = document.getElementById('chatUserSelect').value;
+    else return showToast("Select user to reply");
+    await _supabase.from('messages').insert([payload]); 
     chatInput.value = ""; 
 }
-function listenChat() { _supabase.channel('any').on('postgres_changes', { event: 'INSERT', table: 'messages' }, () => renderMessages()).subscribe(); renderMessages(); }
+function listenChat() { _supabase.channel('any').on('postgres_changes', { event: 'INSERT', table: 'messages' }, () => { renderMessages(); if(isAdmin) loadChatUsers(); }).subscribe(); if(isAdmin) loadChatUsers(); renderMessages(); }
+async function loadChatUsers(){
+  const {data} = await _supabase.from('messages').select('user_id').neq('user_id', null);
+  if(data) {
+    const users = [...new Set(data.map(d => d.user_id))];
+    const {data:profs} = await _supabase.from('profiles').select('email, full_name').in('email', users);
+    const userMap = profs.reduce((acc,p) => {acc[p.email] = p.full_name || p.email; return acc;}, {});
+    document.getElementById('chatUserSelect').innerHTML = '<option value="">Select User</option>' + users.map(u => `<option value="${u}">${userMap[u]}</option>`).join('');
+  }
+}
 async function renderMessages() {
     const { data: messages } = await _supabase.from('messages').select('*').order('created_at', {ascending: true});
     if(!messages) return;
@@ -1039,8 +1121,16 @@ async function renderMessages() {
         }, {});
     }
     const filtered = messages.filter(m => {
-        if (isAdmin) return true;
-        return m.sender === currentUser.email || m.sender === ADMIN_EMAIL;
+      if(isAdmin){
+        const selected = document.getElementById('chatUserSelect').value;
+        if(!selected) {
+          chatMessages.innerHTML = '<div style="text-align:center; color:#666;">Select a user to chat</div>';
+          return false;
+        }
+        return m.user_id === selected;
+      } else {
+        return m.user_id === currentUser.email;
+      }
     });
     chatMessages.innerHTML = filtered.map(m => {
         const isMe = m.sender === (isAdmin ? ADMIN_EMAIL : currentUser.email);
