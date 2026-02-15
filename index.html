@@ -7,15 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { 
-            --primary: #FF4F00; 
-            --bg: #f4f7f6; 
-            --gray-alert: #333333; 
-            --green-tick: #28a745; 
-            --red: #e74c3c; 
-            --blue: #3498db; 
-            --white: #ffffff; 
-        }
+        :root { --primary: #FF4F00; --bg: #f4f7f6; --gray-alert: #333333; --green-tick: #28a745; --red: #e74c3c; --blue: #3498db; --white: #ffffff; }
         body { font-family: 'Poppins', sans-serif; margin:0; background: var(--bg); padding-bottom: 80px; overflow-x: hidden; }
         #loaderOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.7); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .spinner-bg { width: 50px; height: 50px; border: 5px solid #e0e0e0; border-top: 5px solid #888888; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -64,116 +56,42 @@
         .payment-card { background: #fff8f5; border: 1px solid #ffccbc; padding: 15px; border-radius: 8px; margin: 10px 0; }
         .admin-select-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
+        /* Login Security Features */
         .pass-container { position: relative; width: 92%; margin: 10px auto; }
         .pass-container input { width: 100%; margin: 0; padding-right: 40px; }
         .toggle-pass { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px; user-select: none; background: transparent; }
         .forgot-link { display: block; margin-top: 15px; color: var(--primary); font-size: 12px; text-decoration: none; cursor: pointer; font-weight: 500; }
 
+        /* Edit Product Section Styles */
         #editProductSection { background: var(--white); padding: 20px; border-radius: 12px; border: 1px solid var(--primary); }
         #editProductSection h3 { color: var(--primary); }
         #editProductSection .btn-main { background: var(--primary); color: var(--white); }
         .preview-img { width: 70px; margin: 5px; border-radius: 8px; }
         #currentVideoPreview { width: 100%; height: 150px; margin-bottom: 10px; }
 
+        /* Order Section for Admin */
         #ordersSection select { background: var(--white); border: 1px solid var(--primary); color: var(--primary); }
         #ordersSection .btn-main { background: var(--primary); color: var(--white); }
 
+        /* Cart Item */
         .cart-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border-radius: 8px; margin-bottom: 10px; border: 1px solid #eee; }
         .cart-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
         .cart-item input[type="checkbox"] { margin-right: 10px; }
 
+        /* Google Sign-in Button */
         .google-btn { background: #4285F4; color: white; border: none; padding: 14px; width: 92%; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; position: relative; }
         .google-btn.disabled { background: #ddd; cursor: not-allowed; }
         .lock-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 18px; color: #888; }
 
+        /* Popup for Google */
         #googlePopup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(51, 51, 51, 0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .popup-content { background: #f4f7f6; padding: 20px; border-radius: 12px; text-align: center; width: 80%; max-width: 300px; }
         .popup-content h2 { color: var(--primary); margin-bottom: 10px; }
         .popup-content button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-
-        .wallet-section { 
-            background: white; 
-            padding: 12px 16px; 
-            border-radius: 10px; 
-            margin: 15px auto; 
-            max-width: 320px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08); 
-            text-align: center; 
-            cursor: pointer; 
-            border: 1px solid var(--primary); 
-        }
-        .wallet-title { 
-            color: var(--primary); 
-            font-size: 15px; 
-            font-weight: 700; 
-            margin-bottom: 5px; 
-        }
-        .wallet-balance { 
-            color: var(--primary); 
-            font-size: 20px; 
-            font-weight: 700; 
-        }
-        .wallet-btns { 
-            display: flex; 
-            gap: 10px; 
-            margin-top: 15px; 
-            justify-content: center; 
-        }
-        .wallet-btn { 
-            flex: 1; 
-            max-width: 140px; 
-            padding: 10px; 
-            border-radius: 8px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            color: white; 
-            background: var(--primary); 
-            border: none; 
-            font-size: 14px; 
-        }
-        .topup-page { 
-            background: var(--primary); 
-            color: white; 
-            padding: 20px 16px; 
-            border-radius: 12px; 
-        }
-        .withdrawal-page { 
-            background: var(--red); 
-            color: white; 
-            padding: 20px 16px; 
-            border-radius: 12px; 
-        }
-        .payment-details { 
-            background: var(--primary); 
-            color: white; 
-            padding: 14px; 
-            border-radius: 10px; 
-            margin: 15px 0; 
-        }
-        .request-card { 
-            background: white; 
-            padding: 14px; 
-            border-radius: 10px; 
-            margin-bottom: 14px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
-            border-left: 4px solid var(--primary); 
-        }
-        .request-card h4 { 
-            margin: 0 0 8px; 
-            color: var(--primary); 
-            font-size: 16px; 
-        }
-        .request-actions { 
-            display: flex; 
-            gap: 8px; 
-            margin-top: 10px; 
-            flex-wrap: wrap; 
-        }
     </style>
 </head>
 <body>
 
-<!-- Loader, Toast, Confirm Dialog -->
 <div id="loaderOverlay"><div class="spinner-bg"></div></div>
 <div id="customToast">Notification</div>
 
@@ -187,7 +105,6 @@
 
 <header>HELLO SHOP</header>
 
-<!-- Floating Chat Button & Window -->
 <div id="chatBtn" onclick="toggleChat()">💬</div>
 <div id="chatWindow">
     <div style="background:var(--primary); color:white; padding:12px; font-weight:bold; display:flex; justify-content:space-between;">
@@ -200,7 +117,6 @@
     </div>
 </div>
 
-<!-- Login Page -->
 <div id="authPage" class="section active-section">
     <div style="text-align: center; padding-top: 50px;">
         <h2 style="color:var(--primary)">Login / Signup</h2>
@@ -223,7 +139,6 @@
     </div>
 </div>
 
-<!-- Reset Password Page -->
 <div id="resetPage" class="section">
     <div style="text-align: center; padding-top: 50px;">
         <h2 style="color:var(--primary)">Set New Password</h2>
@@ -236,15 +151,12 @@
     </div>
 </div>
 
-<!-- Main App -->
 <div id="mainApp" style="display:none;">
-    <!-- Home -->
     <div id="homeSection" class="section active-section">
         <div class="search-area"><input type="text" id="searchBar" placeholder="Search..." onkeyup="searchProducts()"></div>
         <div id="products">Loading...</div>
     </div>
 
-    <!-- Admin Panel -->
     <div id="adminPanelSection" class="section">
         <div style="background: white; padding: 15px; border-radius: 12px; border:1px solid #ddd;">
             <h3 style="margin-top:0; color:var(--primary)">Admin Panel</h3>
@@ -259,7 +171,6 @@
         </div>
     </div>
 
-    <!-- Edit Product -->
     <div id="editProductSection" class="section">
         <button onclick="switchSection('homeSection')" style="border:none; background:none; color:var(--primary); font-weight:bold; margin-bottom:15px;">← Back</button>
         <h3 style="color:var(--primary)">Edit Product</h3>
@@ -275,7 +186,6 @@
         <button class="btn-main" onclick="saveEditedProduct()">Save Changes</button>
     </div>
 
-    <!-- Product Detail -->
     <div id="productDetailPage" class="section">
         <button onclick="switchSection('homeSection')" style="border:none; background:none; color:var(--primary); font-weight:bold; margin-bottom:15px;">← Back</button>
         <div id="detailSlider" class="slider"></div>
@@ -287,7 +197,6 @@
         <div id="detailActionBtn"></div>
     </div>
 
-    <!-- Orders -->
     <div id="ordersSection" class="section">
         <div class="admin-select-header" id="adminOrderHeader" style="display:none;">
             <h3 style="margin:0;">📦 Orders</h3>
@@ -298,7 +207,6 @@
         <div id="userOrdersList"></div>
     </div>
 
-    <!-- Cart -->
     <div id="cartSection" class="section">
         <h3>Checkout</h3>
         <div style="position: relative;">
@@ -312,7 +220,6 @@
             <select id="payMethodSelect" onchange="togglePaymentUI()">
                 <option value="jazzcash">JazzCash (Online)</option>
                 <option value="cod" id="codOption" disabled>Cash on Delivery (Only Layyah)</option>
-                <option value="wallet" id="walletOption" disabled>HelloShop Wallet (RS 0)</option>
             </select>
             <div id="codNotice" style="color:red; font-size:10px; margin-top:-5px; display:none;">COD only available in Layyah city.</div>
 
@@ -333,11 +240,10 @@
                 <input type="file" id="orderTrxImg" accept="image/*" style="font-size:11px;">
             </div>
             
-            <button class="btn-main" style="margin-top:10px;" onclick="placeOrder()">Confirm Order (Rs <span id="cartTotal">0</span>)</button>
+            <button class="btn-main" style="background:var(--green-tick); margin-top:10px;" onclick="placeOrder()">Confirm Order (Rs <span id="cartTotal">0</span>)</button>
         </div>
     </div>
 
-    <!-- Buy Now -->
     <div id="buyNowSection" class="section" style="background: #f4f7f6;">
         <h3>Buy Now</h3>
         <div id="buyNowItem" style="background:#fff; padding:10px; border-radius:8px; margin-bottom:10px;"></div>
@@ -345,7 +251,6 @@
         <select id="buyNowPayMethodSelect" onchange="toggleBuyNowPaymentUI()">
             <option value="jazzcash">JazzCash (Online)</option>
             <option value="cod" id="buyNowCodOption" disabled>Cash on Delivery (Only Layyah)</option>
-            <option value="wallet" id="buyNowWalletOption" disabled>HelloShop Wallet (RS 0)</option>
         </select>
         <div id="buyNowCodNotice" style="color:red; font-size:10px; margin-top:-5px; display:none;">COD only available in Layyah city.</div>
 
@@ -366,41 +271,26 @@
             <input type="file" id="buyNowOrderTrxImg" accept="image/*" style="font-size:11px;">
         </div>
         
-        <button class="btn-main" style="margin-top:10px;" onclick="placeBuyNowOrder()">Confirm Order (Rs <span id="buyNowTotal">0</span>)</button>
+        <button class="btn-main" style="background:var(--green-tick); margin-top:10px;" onclick="placeBuyNowOrder()">Confirm Order (Rs <span id="buyNowTotal">0</span>)</button>
     </div>
 
-    <!-- Profile -->
     <div id="profileSection" class="section">
         <div style="text-align:center">
             <h3 id="userNameDisplay" style="color: var(--primary); margin-bottom: 10px; display: none;"></h3>
             <div class="user-pic-container"><img id="userProfilePic" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:100%; height:100%; object-fit:cover;"></div>
             <input type="file" id="userPicInput" style="display:none" onchange="uploadProfilePic(this)">
             <button class="btn-main" style="width:60%; font-size:12px; padding:8px; margin-bottom:10px" onclick="document.getElementById('userPicInput').click()">Upload Photo</button>
-
-            <!-- Wallet Button (Customer only) -->
-            <div id="customerWalletBtn" style="display:none;">
-                <div class="wallet-section" onclick="switchSection('walletSection')">
-                    <div class="wallet-title">HELLO SHOP WALLET</div>
-                    <div class="wallet-balance">RS <span id="walletBalance">0</span></div>
-                </div>
-            </div>
-
-            <!-- Name Book -->
             <div id="userNameBook" style="margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd; display:none;">
                 <label style="font-weight:bold; font-size:14px;">My Full Name</label>
                 <input type="text" id="profileNameInput" placeholder="Enter your full name...">
                 <button class="btn-main" style="font-size:12px; padding:8px;" onclick="saveUserName()">Save Name</button>
                 <button id="editNameBtn" class="btn-main" style="display:none; font-size:12px; padding:8px; background:var(--blue);" onclick="editUserName()">Edit Name</button>
             </div>
-
-            <!-- Address Book -->
             <div id="userAddressBook" style="margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd; display:none;">
                 <label style="font-weight:bold; font-size:14px;">My Address Book</label>
                 <textarea id="profileAddressInput" placeholder="Enter your delivery address..." rows="3"></textarea>
                 <button class="btn-main" style="font-size:12px; padding:8px;" onclick="saveUserAddress()">Save Address</button>
             </div>
-
-            <!-- Admin Sections -->
             <div id="adminPaymentProofs" style="display:none; margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd;">
                 <div class="admin-select-header">
                     <h4 style="margin:0; color:var(--primary)">Payment Proofs</h4>
@@ -409,75 +299,9 @@
                 <button id="adminDelProofBtn" class="btn-main" style="display:none; margin-bottom:15px; background:var(--red); padding:8px; font-size:12px;" onclick="deleteSelectedProof()">Delete Proof</button>
                 <div id="proofsList" style="font-size:12px;">No proofs yet.</div>
             </div>
-
-            <div id="adminTopupRequests" style="display:none; margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd;">
-                <h4 style="margin:0; color:var(--primary)">Topup Requests (from customers)</h4>
-                <div id="adminTopupList"></div>
-            </div>
-
-            <div id="adminWithdrawalRequests" style="display:none; margin-top:20px; text-align:left; background:white; padding:15px; border-radius:10px; border:1px solid #ddd;">
-                <h4 style="margin:0; color:var(--primary)">Withdrawal Requests (from customers)</h4>
-                <div id="adminWithdrawalList"></div>
-            </div>
-
             <h3 id="displayEmail" style="margin-top:20px">User</h3>
             <button class="btn-main" style="background:#888" onclick="userLogout()">Logout</button>
         </div>
-    </div>
-
-    <!-- Wallet Section (Customer) -->
-    <div id="walletSection" class="section">
-        <h2 style="color:var(--primary); text-align:center; margin-bottom:20px;">HELLO SHOP WALLET</h2>
-        <div style="text-align:center; margin:20px 0; background:white; padding:25px; border-radius:12px; box-shadow:0 3px 12px rgba(0,0,0,0.08); border:1px solid var(--primary);">
-            <div style="font-size:34px; font-weight:700; color:var(--primary);">RS <span id="walletBalanceDisplay">0</span></div>
-            <small style="color:#555;">Available Balance</small>
-        </div>
-
-        <div class="wallet-btns">
-            <button class="wallet-btn" onclick="switchSection('topupSection')">Top Up</button>
-            <button class="wallet-btn" style="background:var(--red);" onclick="switchSection('withdrawalSection')">Withdrawal</button>
-        </div>
-
-        <h3 style="margin:35px 0 15px; color:var(--primary); text-align:center;">Your Topup Requests</h3>
-        <div id="topupRequestsList"></div>
-
-        <h3 style="margin:35px 0 15px; color:var(--primary); text-align:center;">Your Withdrawal Requests</h3>
-        <div id="withdrawalRequestsList"></div>
-    </div>
-
-    <!-- Top Up Page -->
-    <div id="topupSection" class="section topup-page">
-        <h2 style="text-align:center; margin-bottom:20px;">Top Up Wallet</h2>
-        <input type="number" id="topupAmount" placeholder="Enter Amount (RS)" min="100" required>
-        <select id="topupMethod" required>
-            <option value="">Select Payment Method</option>
-            <option value="easypaisa">EasyPaisa</option>
-            <option value="jazzcash">JazzCash</option>
-            <option value="sadapay">SadaPay</option>
-        </select>
-        <div class="payment-details">
-            <p style="margin:6px 0;"><b>EasyPaisa:</b> 03279491068</p>
-            <p style="margin:6px 0;"><b>JazzCash:</b> 03299469804 - SAJAWAL NAZEER</p>
-            <p style="margin:6px 0;"><b>SadaPay:</b> 03299469804 - NAZIR HUSSAIN</p>
-        </div>
-        <input type="text" id="topupTrxId" placeholder="Transaction ID" required>
-        <label style="display:block; margin:12px 0 6px; color:white;">Upload Payment Screenshot</label>
-        <input type="file" id="topupScreenshot" accept="image/*" required>
-        <button class="btn-main" style="margin-top:15px;" onclick="sendTopupRequest()">Send Topup Request</button>
-    </div>
-
-    <!-- Withdrawal Page -->
-    <div id="withdrawalSection" class="section withdrawal-page">
-        <h2 style="text-align:center; margin-bottom:20px;">Withdrawal Request</h2>
-        <input type="number" id="withdrawalAmount" placeholder="Enter Amount (RS)" min="500" required>
-        <select id="withdrawalMethod" required>
-            <option value="">Select Method</option>
-            <option value="easypaisa">EasyPaisa</option>
-            <option value="jazzcash">JazzCash</option>
-        </select>
-        <input type="text" id="withdrawalName" placeholder="Account Holder Name" required>
-        <input type="text" id="withdrawalNumber" placeholder="Account Number / Mobile" required>
-        <button class="btn-main" style="background:white; color:var(--red); margin-top:15px;" onclick="sendWithdrawalRequest()">Send Withdrawal Request</button>
     </div>
 </div>
 
@@ -495,7 +319,7 @@ const SUPABASE_KEY = "sb_publishable_OmqQDQdf7ye8KXbviwFYng_zPdbZpWb";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ADMIN_EMAIL = "ligerplaz@gmail.com";
 let currentUser = null, isAdmin = false, allProducts = [], currentDetailProduct = null, userSavedAddress = "", userSavedName = "", editingProduct = null;
-let confirmCallback = null, userProfiles = {}, walletBalance = 0;
+let confirmCallback = null, userProfiles = {};
 
 function togglePass(id) {
     const p = document.getElementById(id);
@@ -582,9 +406,6 @@ function togglePaymentUI() {
     if(method === 'cod') {
         proofUI.style.display = 'none';
         jcDetails.style.display = 'none';
-    } else if(method === 'wallet') {
-        proofUI.style.display = 'none';
-        jcDetails.style.display = 'none';
     } else {
         proofUI.style.display = 'block';
         jcDetails.style.display = 'block';
@@ -596,9 +417,6 @@ function toggleBuyNowPaymentUI() {
     const proofUI = document.getElementById('buyNowPaymentProofUI');
     const jcDetails = document.getElementById('buyNowJazzcashDetails');
     if(method === 'cod') {
-        proofUI.style.display = 'none';
-        jcDetails.style.display = 'none';
-    } else if(method === 'wallet') {
         proofUI.style.display = 'none';
         jcDetails.style.display = 'none';
     } else {
@@ -644,6 +462,28 @@ window.onload = () => {
     if(saved) { currentUser = JSON.parse(saved); setupApp(currentUser.email); logVisitor(); } else { logVisitor(); }
 };
 
+function setupApp(email) {
+    isAdmin = (email === ADMIN_EMAIL);
+    document.getElementById('authPage').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('bottomNav').style.display = 'flex';
+    document.getElementById('chatBtn').style.display = 'flex';
+    if(isAdmin) {
+        document.getElementById('displayEmail').innerHTML = '<span style="color: var(--primary);">ADMIN</span>';
+        document.getElementById('adminNavBtn').style.display = 'flex';
+        document.getElementById('cartNavBtn').style.display = 'none'; 
+        document.getElementById('adminPaymentProofs').style.display = 'block';
+        document.getElementById('adminOrderHeader').style.display = 'flex';
+        document.getElementById('userOrderTitle').style.display = 'none';
+        fetchProofs(); // Removed fetchVisitors
+    } else {
+        document.getElementById('displayEmail').innerText = email;
+        document.getElementById('userNameBook').style.display = 'block';
+        document.getElementById('userAddressBook').style.display = 'block';
+    }
+    loadProducts(); fetchOrders(); listenChat(); loadProfileData(); renderCart();
+}
+
 async function loadProfileData() {
     const { data } = await _supabase.from('profiles').select('*').eq('email', currentUser.email).maybeSingle();
     if(data) {
@@ -654,6 +494,7 @@ async function loadProfileData() {
             document.getElementById('userNameDisplay').style.display = 'block';
             document.getElementById('profileNameInput').value = data.full_name;
             document.getElementById('profileNameInput').style.display = 'none';
+            document.getElementById('saveNameBtn').style.display = 'none';
             document.getElementById('editNameBtn').style.display = 'block';
             document.getElementById('orderName').value = data.full_name;
             document.getElementById('buyNowOrderName').value = data.full_name;
@@ -670,7 +511,7 @@ async function loadProfileData() {
 }
 
 async function saveUserName() {
-    const name = document.getElementById('profileNameInput').value.trim();
+    const name = document.getElementById('profileNameInput').value;
     if (!name) return showToast("Enter your name!");
     loaderOverlay.style.display = 'flex';
     await _supabase.from('profiles').upsert([{ email: currentUser.email, full_name: name }], { onConflict: 'email' });
@@ -678,6 +519,7 @@ async function saveUserName() {
     document.getElementById('userNameDisplay').innerText = name;
     document.getElementById('userNameDisplay').style.display = 'block';
     document.getElementById('profileNameInput').style.display = 'none';
+    document.getElementById('saveNameBtn').style.display = 'none';
     document.getElementById('editNameBtn').style.display = 'block';
     document.getElementById('orderName').value = name;
     document.getElementById('buyNowOrderName').value = name;
@@ -688,11 +530,12 @@ async function saveUserName() {
 function editUserName() {
     document.getElementById('userNameDisplay').style.display = 'none';
     document.getElementById('profileNameInput').style.display = 'block';
+    document.getElementById('saveNameBtn').style.display = 'block';
     document.getElementById('editNameBtn').style.display = 'none';
 }
 
 async function saveUserAddress() {
-    const addr = document.getElementById('profileAddressInput').value.trim();
+    const addr = document.getElementById('profileAddressInput').value;
     loaderOverlay.style.display = 'flex';
     await _supabase.from('profiles').upsert([{ email: currentUser.email, address: addr }], { onConflict: 'email' });
     userSavedAddress = addr;
@@ -714,245 +557,6 @@ async function uploadProfilePic(input) {
         showToast("Photo Updated!");
     };
     reader.readAsDataURL(input.files[0]);
-}
-
-async function loadWalletBalance() {
-    if (isAdmin) return;
-    const { data } = await _supabase.from('profiles').select('wallet_balance').eq('email', currentUser.email).single();
-    if (data && data.wallet_balance !== null) {
-        walletBalance = Number(data.wallet_balance);
-        document.getElementById('walletBalance').innerText = walletBalance.toFixed(0);
-        document.getElementById('walletBalanceDisplay').innerText = walletBalance.toFixed(0);
-        document.getElementById('walletOption').innerText = `HelloShop Wallet (RS ${walletBalance.toFixed(0)})`;
-        document.getElementById('walletOption').disabled = walletBalance <= 0;
-        document.getElementById('buyNowWalletOption').innerText = `HelloShop Wallet (RS ${walletBalance.toFixed(0)})`;
-        document.getElementById('buyNowWalletOption').disabled = walletBalance <= 0;
-    } else {
-        document.getElementById('walletOption').innerText = `HelloShop Wallet (RS 0)`;
-        document.getElementById('walletOption').disabled = true;
-        document.getElementById('buyNowWalletOption').innerText = `HelloShop Wallet (RS 0)`;
-        document.getElementById('buyNowWalletOption').disabled = true;
-    }
-}
-
-async function loadTopupRequests() {
-    if (isAdmin) return;
-    const { data } = await _supabase.from('topup_requests').select('*').eq('user_email', currentUser.email).order('created_at', { ascending: false });
-    document.getElementById('topupRequestsList').innerHTML = (data || []).map(r => `
-        <div class="request-card">
-            <h4>RS ${r.amount} - ${r.method.toUpperCase()}</h4>
-            <p>Trx ID: ${r.trx_id || 'N/A'}</p>
-            <p>Status: <strong>${r.status.toUpperCase()}</strong></p>
-            ${r.status === 'pending' ? `<button class="btn-small btn-delete" onclick="deleteTopupRequest('${r.id}')">Delete</button>` : ''}
-            ${r.screenshot ? `<img src="${r.screenshot}" style="max-width:100px; margin-top:5px;">` : ''}
-        </div>
-    `).join('') || '<p>No topup requests yet.</p>';
-}
-
-async function loadWithdrawalRequests() {
-    if (isAdmin) return;
-    const { data } = await _supabase.from('withdrawal_requests').select('*').eq('user_email', currentUser.email).order('created_at', { ascending: false });
-    document.getElementById('withdrawalRequestsList').innerHTML = (data || []).map(r => `
-        <div class="request-card">
-            <h4>RS ${r.amount} - ${r.method.toUpperCase()}</h4>
-            <p>Name: ${r.name} | Number: ${r.number}</p>
-            <p>Status: <strong>${r.status.toUpperCase()}</strong></p>
-            ${r.status === 'pending' ? `<button class="btn-small btn-delete" onclick="deleteWithdrawalRequest('${r.id}')">Delete</button>` : ''}
-        </div>
-    `).join('') || '<p>No withdrawal requests yet.</p>';
-}
-
-async function sendTopupRequest() {
-    const amount = parseFloat(document.getElementById('topupAmount').value);
-    const method = document.getElementById('topupMethod').value;
-    const trxId = document.getElementById('topupTrxId').value.trim();
-    const screenshotFile = document.getElementById('topupScreenshot').files[0];
-
-    if (!amount || amount < 100) return showToast("Minimum topup amount is RS 100");
-    if (!method) return showToast("Select payment method");
-    if (!trxId || !screenshotFile) return showToast("Enter Trx ID and upload screenshot");
-
-    loaderOverlay.style.display = 'flex';
-
-    try {
-        const screenshotBase64 = await toBase64(screenshotFile);
-        const { error } = await _supabase.from('topup_requests').insert([{
-            user_email: currentUser.email,
-            amount,
-            method,
-            trx_id: trxId,
-            screenshot: screenshotBase64,
-            status: 'pending'
-        }]);
-
-        if (error) throw error;
-
-        showToast("Topup Request Sent Successfully!");
-        switchSection('walletSection');
-        loadTopupRequests();
-    } catch (err) {
-        showToast("Error sending request: " + err.message);
-    } finally {
-        loaderOverlay.style.display = 'none';
-    }
-}
-
-async function sendWithdrawalRequest() {
-    const amount = parseFloat(document.getElementById('withdrawalAmount').value);
-    const method = document.getElementById('withdrawalMethod').value;
-    const name = document.getElementById('withdrawalName').value.trim();
-    const number = document.getElementById('withdrawalNumber').value.trim();
-
-    if (!amount || amount < 500) return showToast("Minimum withdrawal is RS 500");
-    if (amount > walletBalance) return showToast("Insufficient balance in wallet");
-    if (!method || !name || !number) return showToast("Fill all fields");
-
-    loaderOverlay.style.display = 'flex';
-
-    try {
-        const { error } = await _supabase.from('withdrawal_requests').insert([{
-            user_email: currentUser.email,
-            amount,
-            method,
-            name,
-            number,
-            status: 'pending'
-        }]);
-
-        if (error) throw error;
-
-        showToast("Withdrawal Request Sent Successfully!");
-        switchSection('walletSection');
-        loadWithdrawalRequests();
-    } catch (err) {
-        showToast("Error sending request: " + err.message);
-    } finally {
-        loaderOverlay.style.display = 'none';
-    }
-}
-
-async function deleteTopupRequest(id) {
-    openConfirm("Delete this topup request?", async () => {
-        await _supabase.from('topup_requests').delete().eq('id', id).eq('user_email', currentUser.email);
-        loadTopupRequests();
-        showToast("Request deleted");
-    });
-}
-
-async function deleteWithdrawalRequest(id) {
-    openConfirm("Delete this withdrawal request?", async () => {
-        await _supabase.from('withdrawal_requests').delete().eq('id', id).eq('user_email', currentUser.email);
-        loadWithdrawalRequests();
-        showToast("Request deleted");
-    });
-}
-
-async function loadAdminTopupRequests() {
-    if (!isAdmin) return;
-    const { data } = await _supabase.from('topup_requests').select('*').order('created_at', { ascending: false });
-    document.getElementById('adminTopupList').innerHTML = (data || []).map(r => `
-        <div class="request-card">
-            <p><b>User:</b> ${r.user_email}</p>
-            <p><b>Amount:</b> RS ${r.amount}</p>
-            <p><b>Method:</b> ${r.method}</p>
-            <p><b>Trx ID:</b> ${r.trx_id || 'N/A'}</p>
-            <p><b>Status:</b> <strong>${r.status}</strong></p>
-            ${r.screenshot ? `<img src="${r.screenshot}" style="max-width:150px; margin:10px 0; border-radius:8px;">` : ''}
-            ${r.status === 'pending' ? `
-                <div class="request-actions">
-                    <button class="btn-main" style="background:#28a745;" onclick="adminAcceptTopup('${r.id}', ${r.amount}, '${r.user_email}')">Accept</button>
-                    <button class="btn-main" style="background:var(--red);" onclick="adminRejectTopup('${r.id}')">Reject</button>
-                    <button class="btn-delete" onclick="adminDeleteRequest('topup_requests', '${r.id}')">Delete</button>
-                </div>
-            ` : ''}
-        </div>
-    `).join('') || '<p>No topup requests.</p>';
-}
-
-async function loadAdminWithdrawalRequests() {
-    if (!isAdmin) return;
-    const { data } = await _supabase.from('withdrawal_requests').select('*').order('created_at', { ascending: false });
-    document.getElementById('adminWithdrawalList').innerHTML = (data || []).map(r => `
-        <div class="request-card">
-            <p><b>User:</b> ${r.user_email}</p>
-            <p><b>Amount:</b> RS ${r.amount}</p>
-            <p><b>Method:</b> ${r.method}</p>
-            <p><b>Name:</b> ${r.name}</p>
-            <p><b>Number:</b> ${r.number}</p>
-            <p><b>Status:</b> <strong>${r.status}</strong></p>
-            ${r.status === 'pending' ? `
-                <div class="request-actions">
-                    <button class="btn-main" style="background:#28a745;" onclick="adminAcceptWithdrawal('${r.id}', ${r.amount}, '${r.user_email}')">Accept</button>
-                    <button class="btn-main" style="background:var(--red);" onclick="adminRejectWithdrawal('${r.id}')">Reject</button>
-                    <button class="btn-delete" onclick="adminDeleteRequest('withdrawal_requests', '${r.id}')">Delete</button>
-                </div>
-            ` : ''}
-        </div>
-    `).join('') || '<p>No withdrawal requests.</p>';
-}
-
-async function adminAcceptTopup(id, amount, userEmail) {
-    openConfirm("Accept topup and add to wallet?", async () => {
-        loaderOverlay.style.display = 'flex';
-        try {
-            const { data: profile } = await _supabase.from('profiles').select('wallet_balance').eq('email', userEmail).single();
-            const current = profile?.wallet_balance || 0;
-            await _supabase.from('profiles').update({ wallet_balance: current + amount }).eq('email', userEmail);
-            await _supabase.from('topup_requests').update({ status: 'accepted' }).eq('id', id);
-            showToast("Topup Accepted!");
-            loadAdminTopupRequests();
-            if (currentUser.email === userEmail) loadWalletBalance();
-        } catch (e) {
-            showToast("Error: " + e.message);
-        } finally {
-            loaderOverlay.style.display = 'none';
-        }
-    });
-}
-
-async function adminRejectTopup(id) {
-    openConfirm("Reject this topup request?", async () => {
-        await _supabase.from('topup_requests').update({ status: 'rejected' }).eq('id', id);
-        showToast("Topup Rejected");
-        loadAdminTopupRequests();
-    });
-}
-
-async function adminAcceptWithdrawal(id, amount, userEmail) {
-    openConfirm("Accept withdrawal and deduct from wallet?", async () => {
-        loaderOverlay.style.display = 'flex';
-        try {
-            const { data: profile } = await _supabase.from('profiles').select('wallet_balance').eq('email', userEmail).single();
-            const current = profile?.wallet_balance || 0;
-            if (current < amount) throw new Error("Insufficient balance now");
-            await _supabase.from('profiles').update({ wallet_balance: current - amount }).eq('email', userEmail);
-            await _supabase.from('withdrawal_requests').update({ status: 'accepted' }).eq('id', id);
-            showToast("Withdrawal Accepted!");
-            loadAdminWithdrawalRequests();
-            if (currentUser.email === userEmail) loadWalletBalance();
-        } catch (e) {
-            showToast("Error: " + e.message);
-        } finally {
-            loaderOverlay.style.display = 'none';
-        }
-    });
-}
-
-async function adminRejectWithdrawal(id) {
-    openConfirm("Reject this withdrawal request?", async () => {
-        await _supabase.from('withdrawal_requests').update({ status: 'rejected' }).eq('id', id);
-        showToast("Withdrawal Rejected");
-        loadAdminWithdrawalRequests();
-    });
-}
-
-async function adminDeleteRequest(table, id) {
-    openConfirm("Delete this request?", async () => {
-        await _supabase.from(table).delete().eq('id', id);
-        if (table === 'topup_requests') loadAdminTopupRequests();
-        else loadAdminWithdrawalRequests();
-        showToast("Request deleted");
-    });
 }
 
 async function loadProducts() {
@@ -1065,6 +669,7 @@ async function placeBuyNowOrder() {
             price: currentDetailProduct.disc_price || currentDetailProduct.price,
             img: currentDetailProduct.img
         }];
+        // Check & decrease stock safely
         for (let item of items) {
             const { data: prod, error: stockErr } = await _supabase
                 .from('products')
@@ -1103,8 +708,7 @@ async function placeBuyNowOrder() {
             status: 'Pending',
             trx_id: method === 'cod' ? null : trxId,
             trx_img: trxBase64,
-            items: items,
-            payment_method: method
+            items: items
         }]);
 
         if (orderErr) throw orderErr;
@@ -1260,11 +864,6 @@ function switchSection(id, btn) {
     document.getElementById(id).style.display = 'block'; 
     if(btn) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active')); btn.classList.add('nav-active'); }
     if(id === 'cartSection') renderCart();
-    if(id === 'walletSection' && !isAdmin) {
-        loadTopupRequests();
-        loadWithdrawalRequests();
-        loadWalletBalance();
-    }
 }
 
 function addToCart(buyNow = false) {
@@ -1334,7 +933,7 @@ function showCheckoutForm() {
     document.getElementById('orderAddress').value = userSavedAddress;
     checkLayyahCity();
     document.getElementById('checkoutForm').style.display = 'block';
-    currentDetailProduct = { items: selected };
+    currentDetailProduct = { items: selected }; // Temp for placeOrder
 }
 
 async function placeOrder() {
@@ -1353,17 +952,13 @@ async function placeOrder() {
         return showToast("Please enter Trx ID and upload payment screenshot for JazzCash!");
     }
 
-    if (method === 'wallet' && walletBalance < parseFloat(document.getElementById('cartTotal').innerText)) {
-        return showToast("Insufficient wallet balance!");
-    }
-
     loaderOverlay.style.display = 'flex';
 
     try {
         const items = currentDetailProduct.items || [];
         if (items.length === 0) throw new Error("No items selected");
 
-        // Stock check & decrement
+        // Check & decrease stock safely
         for (let item of items) {
             const { data: prod, error: stockErr } = await _supabase
                 .from('products')
@@ -1392,13 +987,6 @@ async function placeOrder() {
         const orderId = 'ORD' + Math.floor(100000 + Math.random() * 900000);
         const total = items.reduce((sum, i) => sum + i.price, 0);
 
-        let walletDeduct = 0;
-        if (method === 'wallet') {
-            walletDeduct = total;
-            await _supabase.from('profiles').update({ wallet_balance: walletBalance - total }).eq('email', currentUser.email);
-            loadWalletBalance();
-        }
-
         const { error: orderErr } = await _supabase.from('orders').insert([{ 
             order_id: orderId,
             user_email: currentUser.email,
@@ -1407,10 +995,9 @@ async function placeOrder() {
             address: addr,
             total_price: total,
             status: 'Pending',
-            trx_id: method === 'cod' ? null : (method === 'wallet' ? 'WALLET' : trxId),
+            trx_id: method === 'cod' ? null : trxId,
             trx_img: trxBase64,
-            items: items,
-            payment_method: method
+            items: items
         }]);
 
         if (orderErr) throw orderErr;
@@ -1430,97 +1017,46 @@ async function placeOrder() {
     }
 }
 
-function showToast(m) { 
-    customToast.innerText = m; 
-    customToast.style.display = 'block'; 
-    setTimeout(()=>customToast.style.display='none',3000); 
-}
-
-function userLogout() { 
-    localStorage.removeItem('helloShopUser'); 
-    localStorage.removeItem('cart'); 
-    location.reload(); 
-}
-
-function toggleChat() { 
-    chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex'; 
-}
-
+function showToast(m) { customToast.innerText = m; customToast.style.display = 'block'; setTimeout(()=>customToast.style.display='none',3000); }
+function userLogout() { localStorage.removeItem('helloShopUser'); localStorage.removeItem('cart'); location.reload(); }
+function toggleChat() { chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex'; }
 async function sendMsg() { 
-    const text = chatInput.value.trim();
-    if (!text) return;
-    await _supabase.from('messages').insert([{ 
-        sender: isAdmin ? ADMIN_EMAIL : currentUser.email, 
-        text: text,
-        created_at: new Date().toISOString()
-    }]); 
+    if (chatInput.value.trim() === '') return;
+    await _supabase.from('messages').insert([{ sender: isAdmin ? ADMIN_EMAIL : currentUser.email, text: chatInput.value }]); 
     chatInput.value = ""; 
-    renderMessages(); 
 }
-
-function listenChat() { 
-    _supabase.channel('messages-channel')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => renderMessages())
-        .subscribe();
-    renderMessages(); 
-}
-
+function listenChat() { _supabase.channel('any').on('postgres_changes', { event: 'INSERT', table: 'messages' }, () => renderMessages()).subscribe(); renderMessages(); }
 async function renderMessages() {
-    const { data: messages, error } = await _supabase
-        .from('messages')
-        .select('*')
-        .order('created_at', { ascending: true });
-
-    if (error) {
-        console.error("Messages fetch error:", error);
-        return;
-    }
-
-    if(!messages || messages.length === 0) {
-        chatMessages.innerHTML = '<p style="text-align:center; color:#888;">No messages yet</p>';
-        return;
-    }
-
+    const { data: messages } = await _supabase.from('messages').select('*').order('created_at', {ascending: true});
+    if(!messages) return;
+    // Fetch profiles for unique senders
     const uniqueSenders = [...new Set(messages.map(m => m.sender))].filter(s => s !== ADMIN_EMAIL);
     if (uniqueSenders.length > 0) {
         const { data: profiles } = await _supabase.from('profiles').select('email, full_name, profile_pic').in('email', uniqueSenders);
-        userProfiles = profiles ? profiles.reduce((acc, p) => {
-            acc[p.email] = { name: p.full_name || p.email.split('@')[0], dp: p.profile_pic || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' };
+        userProfiles = profiles.reduce((acc, p) => {
+            acc[p.email] = { name: p.full_name || p.email, dp: p.profile_pic || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' };
             return acc;
-        }, {}) : {};
+        }, {});
     }
-
-    const filtered = isAdmin ? messages : messages.filter(m => 
-        m.sender === currentUser.email || m.sender === ADMIN_EMAIL
-    );
-
+    const filtered = messages.filter(m => {
+        if (isAdmin) return true;
+        return m.sender === currentUser.email || m.sender === ADMIN_EMAIL;
+    });
     chatMessages.innerHTML = filtered.map(m => {
         const isMe = m.sender === (isAdmin ? ADMIN_EMAIL : currentUser.email);
-        const senderEmail = m.sender;
-        const name = isMe 
-            ? (isAdmin ? 'Admin' : (userSavedName || currentUser.email.split('@')[0]))
-            : (senderEmail === ADMIN_EMAIL ? 'Admin' : (userProfiles[senderEmail]?.name || senderEmail.split('@')[0]));
-        
-        const dp = isMe 
-            ? (isAdmin ? 'https://cdn-icons-png.flaticon.com/512/149/149071.png' : document.getElementById('userProfilePic').src)
-            : (senderEmail === ADMIN_EMAIL ? 'https://cdn-icons-png.flaticon.com/512/149/149071.png' : (userProfiles[senderEmail]?.dp || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'));
-
+        const name = isMe ? (isAdmin ? 'Admin' : userSavedName || 'You') : (m.sender === ADMIN_EMAIL ? 'Admin' : userProfiles[m.sender]?.name || m.sender);
+        const dp = isMe ? (isAdmin ? 'https://cdn-icons-png.flaticon.com/512/149/149071.png' : document.getElementById('userProfilePic').src) : (m.sender === ADMIN_EMAIL ? 'https://cdn-icons-png.flaticon.com/512/149/149071.png' : userProfiles[m.sender]?.dp || 'https://cdn-icons-png.flaticon.com/512/149/149071.png');
         return `<div class="${isMe ? 'msg-me' : 'msg-them'} msg">
             <div class="msg-header ${isMe ? 'msg-me' : 'msg-them'}">
-                <img src="${dp}" alt="dp">
+                <img src="${dp}">
                 ${name}
             </div>
             ${m.text}
-            <small style="opacity:0.6; display:block; margin-top:4px;">${new Date(m.created_at).toLocaleTimeString()}</small>
         </div>`;
     }).join('');
-
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
-function searchProducts() { 
-    renderHomeProducts(allProducts.filter(p => p.name.toLowerCase().includes(searchBar.value.toLowerCase()))); 
-}
+function searchProducts() { renderHomeProducts(allProducts.filter(p => p.name.toLowerCase().includes(searchBar.value.toLowerCase()))); }
 </script>
 </body>
 </html>
