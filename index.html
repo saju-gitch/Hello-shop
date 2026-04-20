@@ -1,12 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- AdSense Script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4764808849939674"
-     crossorigin="anonymous"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HELLO SHOP | Premium Store</title>
+    <!-- OneSignal Web Push SDK -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "b38916cc-c9c4-48af-ae62-e80dd729a831",   // ← Yeh aap ka App ID already paste hai
+      
+      // Extra recommended options (change kar sakte ho)
+      notifyButton: {
+        enable: true,           // Notification bell icon dikhaye ga (bottom-right)
+        position: 'bottom-right'
+      },
+      
+      // Local testing ke liye (jab aap localhost pe test kar rahe ho)
+      // Production mein is line ko hata dena ya false kar dena
+    });
+
+    // Optional: Welcome notification enable karne ke liye (dashboard se bhi set kar sakte ho)
+    // OneSignal.Slidedown.promptPush();
+  });
+</script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
